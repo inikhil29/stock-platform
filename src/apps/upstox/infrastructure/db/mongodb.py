@@ -1,8 +1,6 @@
 
 
-from apps.upstox.config.settings import (
-    settings
-)
+from apps.upstox.config.settings import settings
 from core.database.mongodb.mongo_client_factory import MongoClientFactory
 
 def get_database():

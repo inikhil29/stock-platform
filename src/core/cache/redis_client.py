@@ -6,7 +6,7 @@ import redis
 from redis.retry import Retry
 from redis.backoff import ExponentialBackoff
 
-from apps.upstox.config.settings import settings
+from core.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class RedisClient:
     def __init__(self):
         self._client = redis.Redis.from_url(
-           settings.UPSTOX_REDIS_URL,
+           settings.REDIS_URL,
 
             # Performance
             decode_responses=True,

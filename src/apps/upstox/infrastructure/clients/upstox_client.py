@@ -1,10 +1,10 @@
 
+from apps.upstox.config.settings import settings
 from apps.upstox.services.upstox_access_token_manager import UpstoxAccessTokenManager
 from apps.upstox.infrastructure.clients.upstox_auth_client import UpstoxAuthClient
 from apps.upstox.infrastructure.store.upstox_token_store import UpstoxAccessTokenStore
-from apps.upstox.config.settings import settings
 from core.clients.http_client import HttpClient
-from apps.upstox.infrastructure.cache.redis_client import redis_client
+from core.cache.redis_client import redis_client
 
 
 class UpstoxClient():

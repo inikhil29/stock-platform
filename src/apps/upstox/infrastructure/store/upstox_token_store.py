@@ -1,5 +1,5 @@
 from apps.upstox.infrastructure.cache.redis_keys import RedisKeys, RedisConfig
-from apps.upstox.infrastructure.cache.redis_client import RedisClient
+from core.cache.redis_client import RedisClient
 
 class UpstoxAccessTokenStore:
     def __init__(self, redis_client: RedisClient):
