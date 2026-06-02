@@ -6,6 +6,6 @@ from apps.upstox.models.instruments_profile import (
 
 class UpstoxInstrumentsProfileRepository(BaseMongoRepository):
 
-    def __init__(self):
+    def __init__(self, database):
 
-        super().__init__(UpstoxInstrumentsProfile)
+        super().__init__(database, UpstoxInstrumentsProfile)

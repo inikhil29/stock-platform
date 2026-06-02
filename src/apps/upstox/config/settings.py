@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     UPSTOX_MYSQL_PASSWORD: str
     UPSTOX_MYSQL_DATABASE: str
     
-    UPSTOX_MONGODB_DATABSE:str
+    UPSTOX_MONGODB_DATABASE:str
     UPSTOX_MONGODB_USER:str
     UPSTOX_MONGODB_PASSWORD:str
     UPSTOX_MONGODB_PORT:int
@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     @property
     def UPSTOX_MONGO_URI(self):
         password = quote_plus(self.UPSTOX_MONGODB_PASSWORD)
-        return f"mongodb://{self.UPSTOX_MONGODB_USER}:{password}@{self.UPSTOX_MONGODB_HOST}:{self.UPSTOX_MONGODB_PORT}/{self.UPSTOX_MONGODB_DATABSE}?authSource={self.UPSTOX_MONGODB_DATABSE}"
+        return f"mongodb://{self.UPSTOX_MONGODB_USER}:{password}@{self.UPSTOX_MONGODB_HOST}:{self.UPSTOX_MONGODB_PORT}/{self.UPSTOX_MONGODB_DATABASE}?authSource={self.UPSTOX_MONGODB_DATABASE}"
         
 
 

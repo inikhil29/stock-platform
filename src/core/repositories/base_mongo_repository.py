@@ -1,20 +1,14 @@
 from pymongo.collection import Collection
 from pymongo import UpdateOne
 
-from apps.upstox.infrastructure.clients.mongo_db_client import (
-    MongoDBClient
-)
-
 
 class BaseMongoRepository:
 
-    def __init__(self, model_class):
+    def __init__(self, database, model_class):
 
         self.model_class = model_class
 
-        db = MongoDBClient.get_database()
-
-        self.collection: Collection = db[
+        self.collection: Collection = database[
             model_class._collection_name
         ]
 

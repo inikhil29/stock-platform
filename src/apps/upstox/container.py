@@ -1,4 +1,5 @@
 
+from apps.upstox.infrastructure.db.mongodb import get_database
 from apps.upstox.repositories.upstox_instrument_repository import UpstoxInstrumentRepository
 from apps.upstox.repositories.upstox_instruments_profile_repository import UpstoxInstrumentsProfileRepository
 
@@ -25,8 +26,13 @@ class UpstoxContainer:
             UpstoxInstrumentRepository()
         )
 
+
+        mongo_db = get_database()
+        
         self._upstox_instruments_profile_repository = (
-            UpstoxInstrumentsProfileRepository()
+            UpstoxInstrumentsProfileRepository(
+                mongo_db
+            )
         )
 
         self._upstox_client = (
