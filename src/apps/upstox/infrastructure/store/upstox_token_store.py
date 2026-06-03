@@ -1,11 +1,11 @@
-from apps.upstox.infrastructure.cache.redis_keys import RedisKeys, RedisConfig
+from apps.upstox.infrastructure.cache.upstox_redis_keys import UpstoxRedisKeys, UpstoxRedisConfig
 from core.cache.redis_client import RedisClient
 
 class UpstoxAccessTokenStore:
     def __init__(self, redis_client: RedisClient):
         self.redis = redis_client
-        self.redis_access_token_key = RedisKeys.UPSTOX_ACCESS_TOKEN_KEY.value
-        self.auth_lock_key = RedisKeys.UPSTOX_AUTH_LOCK_KEY.value
+        self.redis_access_token_key = UpstoxRedisKeys.UPSTOX_ACCESS_TOKEN_KEY.value
+        self.auth_lock_key = UpstoxRedisKeys.UPSTOX_AUTH_LOCK_KEY.value
 
     def get_token(self):
         return self.redis.get(self.redis_access_token_key)
@@ -21,5 +21,5 @@ class UpstoxAccessTokenStore:
         return self.redis.set_if_not_exists(
             self.auth_lock_key,
             "locked",
-            ttl=RedisConfig.UPSTOX_AUTH_CALL_RETRY_TIME
+            ttl=UpstoxRedisConfig.UPSTOX_AUTH_CALL_RETRY_TIME
         )
