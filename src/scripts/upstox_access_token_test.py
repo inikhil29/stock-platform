@@ -1,4 +1,4 @@
-from apps.upstox.config import settings
+from apps.upstox.config.settings import settings
 from apps.upstox.services.upstox_access_token_manager import UpstoxAccessTokenManager
 from apps.upstox.infrastructure.clients.upstox_auth_client import UpstoxAuthClient
 from apps.upstox.infrastructure.store.upstox_token_store import UpstoxAccessTokenStore

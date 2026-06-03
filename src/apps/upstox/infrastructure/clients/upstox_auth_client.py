@@ -3,7 +3,7 @@
 from urllib.parse import urlencode
 import requests
 
-from apps.upstox.config import settings
+from apps.upstox.config.settings import settings
 from apps.upstox.config.upstox_apis import upstox_apis
 from core.cache.redis_client import RedisClient
 from core.clients.http_client import HttpClient
