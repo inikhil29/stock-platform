@@ -1,40 +1,33 @@
-from apps.upstox.infrastructure.clients.upstox_client import (
-    UpstoxClient
+from apps.nse.infrastructure.clients.nse_client import (
+    NseClient
 )
 
 
-class UpstoxInstrumentsClient:
+class NseStockClient:
 
     def __init__(
         self,
-        upstox_client: UpstoxClient
+        nse_client: NseClient
     ):
 
         self._upstox_client = (
-            upstox_client
+            nse_client
         )
 
         self._http = (
-            upstox_client.get_http_client()
+            nse_client.get_http_client()
         )
+        
 
-    def get_instrument_profile(
+    def get_market_status(
         self,
-        isin: str
     ):
-
-        access_token = (
-            self._upstox_client
-            .get_valid_token()
-        )
-        endpoint = f"/fundamentals/{isin}/profile"
+        endpoint = f"/api/marketStatus"
         headers = {
             "Accept": "application/json",
-            "Authorization":
-            f"Bearer {access_token}"
         }
-        response = self._http.getHttpRequest(
+        response = self._http.get_json(
             endpoint,
             headers=headers,
         )
-        return response['data']
+        return response

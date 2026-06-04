@@ -57,7 +57,7 @@ class UpstoxAuthClient:
         }
 
         try:
-            response = self.http.postHttpRequest(
+            response = self.http.post_json(
                 access_token_endpoint, data=data, headers=headers)
             return response
         except (requests.exceptions.HTTPError, requests.exceptions.RequestException) as e:

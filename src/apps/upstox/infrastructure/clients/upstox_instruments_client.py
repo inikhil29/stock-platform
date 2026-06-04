@@ -33,7 +33,7 @@ class UpstoxInstrumentsClient:
             "Authorization":
             f"Bearer {access_token}"
         }
-        response = self._http.getHttpRequest(
+        response = self._http.get_json(
             endpoint,
             headers=headers,
         )

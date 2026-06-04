@@ -15,7 +15,7 @@ class FileClient:
             exist_ok=True
         )
 
-        response = HttpClient.get(url, stream=True)
+        response = HttpClient.download(url, stream=True)
 
         with open(
             output_path,
