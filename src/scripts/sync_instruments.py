@@ -51,9 +51,9 @@ def main():
     # -----------------------------
     # DOWNLOAD
     # -----------------------------
-    client = FileClient()
+    file_client = FileClient()
 
-    client.download_file(
+    file_client.download_file(
         DOWNLOAD_URL,
         gzip_path
     )

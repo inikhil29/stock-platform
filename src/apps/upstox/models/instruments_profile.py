@@ -43,14 +43,14 @@ class UpstoxInstrumentsProfile(MongoBaseModel):
         }
 
     ]
-    
+
     instrument_key: str
 
     instrument_id: int
 
-    company_profile: str|None
+    company_profile: str | None
 
-    sector: str|None
+    sector: str | None
 
     sector_market_cap_inr: MarketCap
 

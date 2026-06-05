@@ -10,7 +10,8 @@ class UpstoxStockInstrumentData(Base):
     exchange = Column(String(255), nullable=False, index=True)
     isin = Column(String(255), nullable=True, index=True)
     instrument_type = Column(String(255), nullable=False, index=True)
-    instrument_key = Column(String(255), nullable=False, unique=True, index=True)
+    instrument_key = Column(String(255), nullable=False,
+                            unique=True, index=True)
     trading_symbol = Column(String(255), nullable=False)
     segment = Column(String(50), nullable=False, index=True)
     sector = Column(String(50), nullable=True, index=True)

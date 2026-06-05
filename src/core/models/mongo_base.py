@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 timezone = ZoneInfo("Asia/Kolkata")
 
+
 class MongoBaseModel(BaseModel):
 
     # Explicit collection name
@@ -73,8 +74,7 @@ class MongoBaseModel(BaseModel):
     def touch(self):
 
         self.updated_at = datetime.now(timezone)
-        
-        
-        
+
+
 def _now_ist():
     return datetime.now(timezone)

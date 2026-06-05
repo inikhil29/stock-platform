@@ -17,7 +17,6 @@ class NseStockClient:
         self._http = (
             nse_client.get_http_client()
         )
-        
 
     def get_market_status(
         self,

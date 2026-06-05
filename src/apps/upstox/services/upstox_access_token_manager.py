@@ -21,8 +21,8 @@ class UpstoxAccessTokenManager:
             now = datetime.now(timezone)
             if expires_at and expires_at > now:
                 return token_data["access_token"]
-        
-        return self._refresh_and_store()  
+
+        return self._refresh_and_store()
 
     def _refresh_with_lock(self):
         with self._lock:
