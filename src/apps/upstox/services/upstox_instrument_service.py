@@ -6,6 +6,7 @@ from apps.upstox.infrastructure.clients.upstox_instruments_client import UpstoxI
 from apps.upstox.repositories.upstox_instrument_repository import UpstoxInstrumentRepository
 from apps.upstox.repositories.upstox_instruments_profile_repository import UpstoxInstrumentsProfileRepository
 
+from core.dataframe.engines.polars.reader import PolarsReader
 
 class UpstoxInstrumentsService:
 
@@ -84,9 +85,14 @@ class UpstoxInstrumentsService:
 
                 self._process_batch(batch)
 
+    def sync_instruments_new(self, json_file_path):
+        polars_reader = PolarsReader()
+        dataframe = polars_reader.read_json(json_file_path, infer_schema_length=None)        
+
     # ---------------------------------
     # TRANSFORM RECORD
     # ---------------------------------
+
     def _transform_record(
         self,
         row,
