@@ -39,7 +39,8 @@ class PolarsDataFrame(IDataFrame):
             return PolarsDataFrame(self._df.collect())
         
         return self    
-    
+    def select(self, *columns:any):
+        return PolarsDataFrame(self._df.select(*columns))
     
     def write_csv(self, path: str, **kwargs):
         self._df.write_csv(path, **kwargs)

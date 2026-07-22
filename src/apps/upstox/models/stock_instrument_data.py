@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Text
 from core.models.base import Base
 
 
-class UpstoxStockInstrumentData(Base):
+class UpstoxInstrumentData(Base):
     __tablename__ = "upstox_stock_instrument_data"
 
     id = Column(Integer, primary_key=True, index=True)

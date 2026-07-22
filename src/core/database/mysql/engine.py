@@ -11,5 +11,8 @@ def create_db_engine(
         max_overflow=20,
         pool_pre_ping=True,
         pool_recycle=1800,
-        echo=False
+        echo=False,
+        connect_args={
+            "local_infile": True
+        }
     )

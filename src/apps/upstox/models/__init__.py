@@ -1,1 +1,1 @@
-from .stock_instrument_data import UpstoxStockInstrumentData
+from .stock_instrument_data import UpstoxInstrumentData

@@ -2,7 +2,7 @@ import json
 import ijson
 from sqlalchemy.dialects.mysql import insert
 from core.database.mysql.db_context import get_upstox_db
-from apps.upstox.models.stock_instrument_data import UpstoxStockInstrumentData
+from apps.upstox.models.stock_instrument_data import UpstoxInstrumentData
 import requests
 import os
 from pathlib import Path
@@ -159,6 +159,6 @@ if __name__ == "__main__":
             complete_instruments_download_url, downlaod_dir)
         
 
-        compare_and_update(extract_file_path, UpstoxStockInstrumentData)
+        compare_and_update(extract_file_path, UpstoxInstrumentData)
     except Exception as e:
         pass

@@ -1,3 +1,4 @@
+from sqlalchemy import text
 from sqlalchemy.dialects.mysql import insert
 
 
@@ -10,6 +11,8 @@ class BaseMySQLRepository:
     ):
 
         self.model = model
+        self.tablename = model.__tablename__
+        self.temp_tablename = f"tmp_{self.tablename}"
 
         self.session_factory = (
             session_factory
@@ -218,20 +221,19 @@ class BaseMySQLRepository:
             session.commit()
 
             return result.rowcount
-        
-        
-    # --------------------------------- 
-    #  STREAM LARGE DATASETS 
-    #  --------------------------------- 
-    def stream( self, filters=None, conditions=None, batch_size=1000 ): 
-        with self.session_factory() as session: 
-            query = session.query( self.model ) 
-            if filters: 
-                query = query.filter_by( **filters ) 
-            if conditions: 
-                query = query.filter( *conditions ) 
-            
-            for row in query.yield_per( batch_size ): 
+
+    # ---------------------------------
+    #  STREAM LARGE DATASETS
+    #  ---------------------------------
+    def stream(self, filters=None, conditions=None, batch_size=1000):
+        with self.session_factory() as session:
+            query = session.query(self.model)
+            if filters:
+                query = query.filter_by(**filters)
+            if conditions:
+                query = query.filter(*conditions)
+
+            for row in query.yield_per(batch_size):
                 yield row
 
     # ---------------------------------
@@ -242,10 +244,64 @@ class BaseMySQLRepository:
 
         return {
 
-            col.name
+            col.name: col.type
 
             for col
             in self.model.__table__.columns
 
             if col.name != "id"
         }
+
+    def _create_temp_table_like(
+        self,
+        session,
+        source_table: str | None = None,
+    ):
+
+        if not source_table:
+            source_table = self.tablename
+            temp_table = self.temp_tablename
+        else:
+            temp_table = f"tmp_{source_table}"
+        sql = text(f"""
+            CREATE TEMPORARY TABLE {temp_table}
+            LIKE {source_table}
+        """)
+
+        session.execute(sql)
+        session.commit()
+
+        return temp_table
+
+    def _drop_temp_table(self, session, temp_tablename: str | None = None):
+
+        if not temp_tablename:
+            temp_tablename = self.temp_tablename
+
+        sql = text(f"""
+            DROP TEMPORARY TABLE IF EXISTS {temp_tablename}
+        """)
+
+        session.execute(sql)
+        session.commit()
+
+    def _load_data_to_temp_table_from_csv(self, session, file_path, columns, temp_tablename: str | None = None) -> str:
+        if not temp_tablename:
+            temp_tablename = self.temp_tablename
+
+        column_sql = ", ".join(
+            f"`{column}`"
+            for column in columns
+        )
+        sql = f"""
+                LOAD DATA LOCAL INFILE '{file_path}'
+                INTO TABLE {temp_tablename}
+                FIELDS TERMINATED BY ','
+                ENCLOSED BY '"'
+                IGNORE 1 ROWS
+                ({column_sql});
+            """
+        session.execute(text(sql))
+        session.commit()
+
+        return temp_tablename

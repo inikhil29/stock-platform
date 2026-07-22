@@ -1,3 +1,6 @@
+from datetime import datetime
+from uuid import uuid4
+
 import ijson
 import pandas as pd
 import time
@@ -7,6 +10,9 @@ from apps.upstox.repositories.upstox_instrument_repository import UpstoxInstrume
 from apps.upstox.repositories.upstox_instruments_profile_repository import UpstoxInstrumentsProfileRepository
 
 from core.dataframe.engines.polars.reader import PolarsReader
+from core.dataframe.engines.polars.schema_validator import PolarsSchemaValidator
+
+from core.config.paths import DATA_DIR
 
 class UpstoxInstrumentsService:
 
@@ -87,7 +93,23 @@ class UpstoxInstrumentsService:
 
     def sync_instruments_new(self, json_file_path):
         polars_reader = PolarsReader()
-        dataframe = polars_reader.read_json(json_file_path, infer_schema_length=None)        
+        dataframe = polars_reader.read_json(
+            json_file_path, infer_schema_length=None)
+
+        polar_schema_validator = PolarsSchemaValidator()
+
+        valid_dataframe = polar_schema_validator.apply(
+            dataframe=dataframe, schema=self._upstox_instrument_repository_valid_columns, ignore_columns=['id', 'sector', 'company_profile'])
+        csv_file_name = (
+            f"{datetime.now():%Y%m%d_%H%M%S}_"
+            f"{uuid4().hex[:8]}.csv"
+        )
+        csv_file_path = DATA_DIR / "instrument_data" / csv_file_name
+        valid_dataframe.write_csv(csv_file_path)
+        dataframe_columns = valid_dataframe.columns
+        result = self._upstox_instrument_repository.get_sync_report(csv_file_path=csv_file_path, valid_temp_table_columns=dataframe_columns)
+        print(result)
+        
 
     # ---------------------------------
     # TRANSFORM RECORD
