@@ -32,31 +32,34 @@ class PolarsDataFrame(IDataFrame):
 
         return self._df.to_dict(as_series=False)
 
-
     def collect(self):
-    
+
         if isinstance(self._df, pl.LazyFrame):
             return PolarsDataFrame(self._df.collect())
-        
-        return self    
-    def select(self, *columns:any):
+
+        return self
+
+    def select(self, *columns: any):
         return PolarsDataFrame(self._df.select(*columns))
-    
+
     def write_csv(self, path: str, **kwargs):
         self._df.write_csv(path, **kwargs)
-        
+
     def write_parquet(self, path: str, **kwargs):
-            self._df.write_parquet(path, **kwargs)
-            
-            
-    def write_json(self, path:str, **kwargs,):
+        self._df.write_parquet(path, **kwargs)
+
+    def write_json(self, path: str, **kwargs,):
         self._df.write_json(path, **kwargs)
-        
+
     def write_database(
         self,
         table: str,
         connection,
         **kwargs,
     ):
-        self._df.write_database(table_name=table, connection=connection, **kwargs)
-        
+        self._df.write_database(
+            table_name=table, connection=connection, **kwargs)
+
+    def show_complete(self, rows: int = -1, cols: int = -1):
+        with pl.Config(tbl_rows=rows, tbl_cols=cols, tbl_width_chars=1000, fmt_str_lengths=1000,):
+            print(self._df)

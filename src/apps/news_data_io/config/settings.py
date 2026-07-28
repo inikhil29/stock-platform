@@ -1,9 +1,9 @@
 from pydantic import ConfigDict
 from core.config.mongodb_settings import MongoDBSettings
-from core.config.mysql_settings import MySQLDatabasSettings
+from core.config.sql_database_settings import DatabasSettings
 
 
-class NewsDataIOApiSettings(MySQLDatabasSettings, MongoDBSettings):
+class NewsDataIOApiSettings(DatabasSettings, MongoDBSettings):
 
     NEWS_DATA_IO_MYSQL_DATABASE: str
     NEWS_DATA_IO_LIVE_URL: str
@@ -16,7 +16,7 @@ class NewsDataIOApiSettings(MySQLDatabasSettings, MongoDBSettings):
 
     @property
     def NEWS_DATA_IO_DATABASE_URL(self):
-        return f"{self.DATABASE_URL}/{self.NEWS_DATA_IO_MYSQL_DATABASE}"
+        return f"{self.MYSQL_DATABASE_URI}/{self.NEWS_DATA_IO_MYSQL_DATABASE}"
 
 
 settings = NewsDataIOApiSettings()

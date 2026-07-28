@@ -63,3 +63,11 @@ class PolarsReader(IDataReader):
         )
 
         return PolarsDataFrame(dataframe)
+    
+    def read_dicts(self, data: list[dict] , **kwargs) -> PolarsDataFrame:
+            dataframe = pl.from_dicts(
+                data,
+                **kwargs,
+            )
+    
+            return PolarsDataFrame(dataframe)

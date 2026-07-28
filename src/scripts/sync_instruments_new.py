@@ -73,7 +73,9 @@ def main():
     upstox_instrument_service.sync_instruments_new(
         json_path
     )
-
+    
+    gzip_path.unlink(missing_ok=True)
+    json_path.unlink(missing_ok=True)
 
 if __name__ == "__main__":
 

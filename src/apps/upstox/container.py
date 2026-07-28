@@ -3,7 +3,7 @@ from apps.upstox.infrastructure.db.mongodb import get_database
 from apps.upstox.repositories.upstox_instrument_repository import UpstoxInstrumentRepository
 from apps.upstox.repositories.upstox_instruments_profile_repository import UpstoxInstrumentsProfileRepository
 
-from apps.upstox.infrastructure.db.session import SessionFactory
+from apps.upstox.infrastructure.db.session import MySQLSessionFactory
 from apps.upstox.models.stock_instrument_data import (
     UpstoxInstrumentData
 )
@@ -32,7 +32,7 @@ class UpstoxContainer:
 
         self._upstox_instrument_repository = (
             UpstoxInstrumentRepository(
-                UpstoxInstrumentData, SessionFactory)
+                UpstoxInstrumentData, MySQLSessionFactory)
         )
 
         mongo_db = get_database()

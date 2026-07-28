@@ -1,9 +1,9 @@
 from pydantic import ConfigDict
 from core.config.mongodb_settings import MongoDBSettings
-from core.config.mysql_settings import MySQLDatabasSettings
+from core.config.sql_database_settings import DatabasSettings
 
 
-class NSEApiSettings(MySQLDatabasSettings, MongoDBSettings):
+class NSEApiSettings(DatabasSettings, MongoDBSettings):
 
     NSE_MYSQL_DATABASE: str
     NSE_LIVE_URL: str
@@ -15,8 +15,8 @@ class NSEApiSettings(MySQLDatabasSettings, MongoDBSettings):
     )
 
     @property
-    def NSE_DATABASE_URL(self):
-        return f"{self.DATABASE_URL}/{self.NSE_MYSQL_DATABASE}"
+    def NSE_MYSQL_DATABASE_URL(self):
+        return f"{self.MYSQL_DATABASE_URI}/{self.NSE_MYSQL_DATABASE}"
 
     @property
     def UPSTOX_MONGO_URI(self):

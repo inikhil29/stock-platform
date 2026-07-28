@@ -36,7 +36,7 @@ class UpstoxInstrumentsService:
     def sync_instruments(
         self,
         json_file_path,
-        batch_size=10
+        batch_size=1000
     ):
 
         batch = []
@@ -108,7 +108,27 @@ class UpstoxInstrumentsService:
         valid_dataframe.write_csv(csv_file_path)
         dataframe_columns = valid_dataframe.columns
         result = self._upstox_instrument_repository.get_sync_report(csv_file_path=csv_file_path, valid_temp_table_columns=dataframe_columns)
-        print(result)
+        if result['update']:
+            print("Update Records : ")
+            polars_reader.read_dicts(result['update']).show_complete()
+        else:
+            print("Update Records : 0")
+        
+        if result['insert']:
+            print("Insert Records : ")
+            polars_reader.read_dicts(result['insert']).show_complete()
+        else:
+            print("Insert Records : 0")
+        
+        option = input("Make the insert update y/n : ")
+        if option.__str__().lower() == 'y':
+            result = self._upstox_instrument_repository.sync_report_with_existing_data(csv_file_path=csv_file_path, valid_temp_table_columns=dataframe_columns)
+            print(result)
+        else:
+            if option.__str__().lower() != 'n':
+                print("Invalid Option!")
+                
+        csv_file_path.unlink(missing_ok=True)
         
 
     # ---------------------------------

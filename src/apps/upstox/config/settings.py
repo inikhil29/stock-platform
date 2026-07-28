@@ -1,8 +1,8 @@
 from pydantic import ConfigDict
 from core.config.mongodb_settings import MongoDBSettings
-from core.config.mysql_settings import MySQLDatabasSettings
+from core.config.sql_database_settings import DatabasSettings
 
-class UpstoxSettings(MySQLDatabasSettings, MongoDBSettings):
+class UpstoxSettings(DatabasSettings, MongoDBSettings):
 
     UPSTOX_API_KEY:str
     UPSTOX_LIVE_URL:str
@@ -20,8 +20,8 @@ class UpstoxSettings(MySQLDatabasSettings, MongoDBSettings):
     )
     
     @property
-    def UPSTOX_DATABASE_URL(self):
-        return f"{self.DATABASE_URL}/{self.UPSTOX_MYSQL_DATABASE}"
+    def UPSTOX_MYSQL_DATABASE_URL(self):
+        return f"{self.MYSQL_DATABASE_URI}/{self.UPSTOX_MYSQL_DATABASE}"
     
     @property
     def UPSTOX_MONGO_URI(self):
