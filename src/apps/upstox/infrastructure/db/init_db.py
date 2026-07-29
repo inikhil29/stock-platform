@@ -1,4 +1,4 @@
-from apps.upstox.infrastructure.db.session import mysql_engine
+from apps.upstox.infrastructure.db.session import mysql_engine, postgres_engine
 from core.models.base import Base
 import apps.upstox.models
 

@@ -15,7 +15,7 @@ class NSEApiSettings(DatabasSettings, MongoDBSettings):
     )
 
     @property
-    def NSE_MYSQL_DATABASE_URL(self):
+    def NSE_MYSQL_DATABASE_URI(self):
         return f"{self.MYSQL_DATABASE_URI}/{self.NSE_MYSQL_DATABASE}"
 
     @property
