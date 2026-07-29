@@ -1,7 +1,7 @@
 import json
 import ijson
 from sqlalchemy.dialects.mysql import insert
-from core.database.sql_database.db_context import get_upstox_db
+from core.infrastructure.database.sql_database.db_context import get_upstox_db
 from apps.upstox.models.stock_instrument_data import UpstoxInstrumentData
 import requests
 import os
