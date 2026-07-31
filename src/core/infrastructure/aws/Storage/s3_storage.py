@@ -10,7 +10,7 @@ from core.infrastructure.aws.aws_client_container import AWSClientContainer
 class S3Storage:
 
     def __init__(self, aws_client: AWSClientContainer):
-        self.client = aws_client.get_s3_client()
+        self._client = aws_client.get_s3_client()
 
     def upload_file(
         self,

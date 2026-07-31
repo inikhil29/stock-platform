@@ -1,18 +1,72 @@
-from sqlalchemy import Column, Integer, String, Text
-from core.models.base import Base
+from sqlalchemy import String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from core.models.base import MySQLBase
+from apps.upstox.models.raw_historical_data_info import RawHistoricalDataInfo
 
 
-class UpstoxInstrumentData(Base):
+class UpstoxInstrumentData(MySQLBase):
     __tablename__ = "upstox_stock_instrument_data"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), nullable=False)
-    exchange = Column(String(255), nullable=False, index=True)
-    isin = Column(String(255), nullable=True, index=True)
-    instrument_type = Column(String(255), nullable=False, index=True)
-    instrument_key = Column(String(255), nullable=False,
-                            unique=True, index=True)
-    trading_symbol = Column(String(255), nullable=False)
-    segment = Column(String(50), nullable=False, index=True)
-    sector = Column(String(50), nullable=True, index=True)
-    company_profile = Column(Text, nullable=True, index=False)
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+
+    exchange: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        index=True,
+    )
+
+    isin: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+        index=True,
+    )
+
+    instrument_type: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        index=True,
+    )
+
+    instrument_key: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+
+    trading_symbol: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+
+    segment: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        index=True,
+    )
+
+    sector: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+        index=True,
+    )
+
+    company_profile: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    historical_data: Mapped[list["RawHistoricalDataInfo"]] = relationship(
+        "RawHistoricalDataInfo",
+        back_populates="instrument",
+        cascade="all, delete-orphan",
+    )

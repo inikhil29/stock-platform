@@ -1,9 +1,11 @@
+from datetime import date
+
 from apps.upstox.infrastructure.clients.upstox_client import (
     UpstoxClient
 )
 
 
-class UpstoxInstrumentsClient:
+class UpstoxHistoricalDataClient:
 
     def __init__(
         self,
@@ -18,16 +20,20 @@ class UpstoxInstrumentsClient:
             upstox_client.get_http_client()
         )
 
-    def get_instrument_profile(
+    def get_historical_data(
         self,
-        isin: str
+        instrument_key: str,
+        unit:str,
+        interval_option: int,
+        to_date: date,
+        from_date: date | None = None
     ):
 
         access_token = (
             self._upstox_client
             .get_valid_token()
         )
-        endpoint = f"/v2/fundamentals/{isin}/profile"
+        endpoint = f"/v3/historical-candle/{instrument_key}/{unit}/{interval_option}/{to_date}/{from_date}"
         headers = {
             "Accept": "application/json",
             "Authorization":

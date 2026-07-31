@@ -1,17 +1,13 @@
 from sqlalchemy import text
 from sqlalchemy.dialects.mysql import insert
 
-from core.models.base import MySQLBase
-from sqlalchemy.orm import Session, sessionmaker
 
-
-
-class BaseMySQLRepository:
+class BasePostgresRepository:
 
     def __init__(
         self,
-        model:MySQLBase,
-        session_factory:sessionmaker[Session]
+        model,
+        session_factory
     ):
 
         self.model = model

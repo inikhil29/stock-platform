@@ -6,7 +6,8 @@ class AwsSettings(BaseSettings):
 
     AWS_ACCESS_KEY: str
     AWS_SECRET_KEY: str
-    AWS_REGION: int
+    AWS_REGION: str
+    AWS_HISTORICAL_DATA_S3_BUCKET:str = 'stock-data-app'
 
     model_config = ConfigDict(
         env_file=".env",

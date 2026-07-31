@@ -6,7 +6,7 @@ class UpstoxInstrumentRepository(
     BaseMySQLRepository
 ):
 
-    def __init__(self, model, session_factory):
+    def __init__(self, session_factory, model):
 
         super().__init__(
             model=model,

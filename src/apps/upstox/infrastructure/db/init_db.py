@@ -1,10 +1,10 @@
 from apps.upstox.infrastructure.db.session import mysql_engine, postgres_engine
-from core.models.base import Base
+from core.models.base import MySQLBase
 import apps.upstox.models
 
 
 def create_tables():
-    Base.metadata.create_all(bind=mysql_engine)
+    MySQLBase.metadata.create_all(bind=mysql_engine)
 
 
 if __name__ == "__main__":
