@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from apps.upstox.container import (
+from apps.stock_info.container import (
     UpstoxContainer
 )
-from core.utilities.candle_interval import CandleInterval
+from core.enum.candle_interval import CandleInterval
 
 BASE_DIR = (
     Path(__file__).resolve().parent

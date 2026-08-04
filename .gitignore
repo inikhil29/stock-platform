@@ -37,5 +37,5 @@ Thumbs.db
 *.gz
 
 # Optional
-src/apps/upstox/data/
+src/apps/stock_info/data/
 src/data/

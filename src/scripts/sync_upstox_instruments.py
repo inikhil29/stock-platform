@@ -9,7 +9,7 @@ from core.utilities.file_utilities import (
     extract_gzip_file
 )
 
-from apps.upstox.container import (
+from apps.stock_info.container import (
     UpstoxContainer
 )
 
@@ -19,7 +19,7 @@ BASE_DIR = (
 
 
 DOWNLOAD_URL = (
-    "https://assets.upstox.com/"
+    "https://assets.stock_info.com/"
     "market-quote/instruments/"
     "exchange/complete.json.gz"
 )

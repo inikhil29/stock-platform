@@ -29,7 +29,7 @@ class RedisClient:
             max_connections=20,
         )
 
-        self._namespace = getattr(settings, "REDIS_NAMESPACE", "upstox")
+        self._namespace = getattr(settings, "REDIS_NAMESPACE", "stock_info")
 
     # ----------------------------
     # Internal Helpers

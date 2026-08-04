@@ -1,4 +1,4 @@
-from apps.upstox.container import UpstoxContainer
+from apps.stock_info.container import UpstoxContainer
 
 
 upstox_instrument_container = UpstoxContainer()
