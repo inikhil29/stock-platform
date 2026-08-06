@@ -9,8 +9,8 @@ from core.utilities.file_utilities import (
     extract_gzip_file
 )
 
-from apps.stock_info.container import (
-    UpstoxContainer
+from apps.stock_data_management.container import (
+    StockDataManagementContainer
 )
 
 BASE_DIR = (
@@ -19,7 +19,7 @@ BASE_DIR = (
 
 
 DOWNLOAD_URL = (
-    "https://assets.stock_info.com/"
+    "https://assets.upstox.com/"
     "market-quote/instruments/"
     "exchange/complete.json.gz"
 )
@@ -58,8 +58,8 @@ def main():
         gzip_path
     )
     
-    upstox_instrument_container = UpstoxContainer()
-    upstox_instrument_service = upstox_instrument_container.get_upstox_instrument_service()
+    stock_data_management_container = StockDataManagementContainer()
+    stock_instrument_service = stock_data_management_container.get_stock_instrument_service()
 
     # -----------------------------
     # EXTRACT
@@ -70,7 +70,7 @@ def main():
     )
 
     
-    upstox_instrument_service.sync_instruments_new(
+    stock_instrument_service.sync_instruments_new(
         json_path
     )
     

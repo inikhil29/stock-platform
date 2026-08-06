@@ -1,11 +1,11 @@
-from apps.stock_info.container import UpstoxContainer
+from apps.stock_data_management.container import StockDataManagementContainer
 
 
 def main():
     symbol = input("Enter the Treading: ").strip()
-    upstox_instrument_container = UpstoxContainer()
-    upstox_instrument_service = upstox_instrument_container.get_upstox_instrument_service()
-    result= upstox_instrument_service.getInstrumentDetails(trading_symbol=symbol)
+    stock_data_management_container = StockDataManagementContainer()
+    stock_instrument_service = stock_data_management_container.get_stock_instrument_service()
+    result= stock_instrument_service.getInstrumentDetails(trading_symbol=symbol)
     print(result)
 
 

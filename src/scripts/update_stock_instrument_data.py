@@ -1,8 +1,8 @@
 import json
 import ijson
-from sqlalchemy.dialects.mysql import insert
+from sqlalchemy.dialects.postgresql import insert
 from core.infrastructure.database.sql_database.db_context import get_upstox_db
-from apps.stock_info.models.stock_instrument_data import UpstoxInstrumentData
+from apps.stock_data_management.models.stock_instruments_data import StockInstrumentsData
 import requests
 import os
 from pathlib import Path
@@ -151,7 +151,7 @@ def update_records(data, table):
 
 if __name__ == "__main__":
     try:
-        complete_instruments_download_url = "https://assets.stock_info.com/market-quote/instruments/exchange/complete.json.gz"
+        complete_instruments_download_url = "https://assets.upstox.com/market-quote/instruments/exchange/complete.json.gz"
         downlaod_dir = BASE_DIR.parent / "data/instrument_data_from_upstox"
         downlaod_dir.mkdir(parents=True, exist_ok=True)
 
@@ -159,6 +159,6 @@ if __name__ == "__main__":
             complete_instruments_download_url, downlaod_dir)
         
 
-        compare_and_update(extract_file_path, UpstoxInstrumentData)
+        compare_and_update(extract_file_path, StockInstrumentsData)
     except Exception as e:
         pass

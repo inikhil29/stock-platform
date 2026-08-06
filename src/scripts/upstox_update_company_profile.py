@@ -1,8 +1,8 @@
-from apps.stock_info.container import UpstoxContainer
+from apps.stock_data_management.container import StockDataManagementContainer
 
 
-upstox_instrument_container = UpstoxContainer()
-upstox_instrument_service = upstox_instrument_container.get_upstox_instrument_service()
+stock_data_management_container = StockDataManagementContainer()
+stock_instrument_service = stock_data_management_container.get_stock_instrument_service()
 
 
-upstox_instrument_service.update_instruments_profile(batch_size=100)
+stock_instrument_service.update_instruments_profile(batch_size=100)

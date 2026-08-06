@@ -1,7 +1,7 @@
-from apps.stock_info.config.settings import settings
-from apps.stock_info.services.upstox_access_token_manager import UpstoxAccessTokenManager
-from apps.stock_info.infrastructure.clients.upstox_auth_client import UpstoxAuthClient
-from apps.stock_info.infrastructure.store.upstox_token_store import UpstoxAccessTokenStore
+from apps.stock_data_management.config.settings import settings
+from apps.stock_data_management.services.upstox_access_token_manager import UpstoxAccessTokenManager
+from apps.stock_data_management.infrastructure.clients.upstox_auth_client import UpstoxAuthClient
+from apps.stock_data_management.infrastructure.store.upstox_token_store import UpstoxAccessTokenStore
 from core.clients.http_client import HttpClient
 from core.cache.redis_client import redis_client
 

@@ -1,5 +1,5 @@
 from sqlalchemy import text
-from sqlalchemy.dialects.mysql import insert
+from sqlalchemy.dialects.postgresql import insert
 
 
 class BasePostgresRepository:
@@ -183,43 +183,30 @@ class BasePostgresRepository:
         records,
         unique_columns=None
     ):
-
         if not records:
             return 0
 
-        unique_columns = (
-            unique_columns or []
-        )
+        unique_columns = unique_columns or []
 
-        stmt = insert(
-            self.model
-        ).values(records)
+        stmt = insert(self.model).values(records)
 
         update_dict = {
-
-            c.name:
-            stmt.inserted[c.name]
-
+            c.name: stmt.excluded[c.name]
             for c in self.model.__table__.columns
-
             if c.name != "id"
             and c.name not in unique_columns
         }
+        if not unique_columns:
+            unique_columns = [i for i in update_dict]
 
-        stmt = (
-            stmt.on_duplicate_key_update(
-                **update_dict
+            stmt = stmt.on_conflict_do_update(
+                index_elements=unique_columns,
+                set_=update_dict
             )
-        )
 
         with self.session_factory() as session:
-
-            result = session.execute(
-                stmt
-            )
-
+            result = session.execute(stmt)
             session.commit()
-
             return result.rowcount
 
     # ---------------------------------
@@ -264,9 +251,12 @@ class BasePostgresRepository:
         else:
             temp_table = f"tmp_{source_table}"
         sql = text(f"""
-            CREATE TEMPORARY TABLE {temp_table}
-            LIKE {source_table}
-        """)
+            CREATE TEMPORARY TABLE IF NOT EXISTS {temp_table}(
+                LIKE {source_table}  
+                INCLUDING ALL  
+            )
+            """
+                   )
 
         session.execute(sql)
         session.commit()
@@ -279,7 +269,7 @@ class BasePostgresRepository:
             temp_tablename = self.temp_tablename
 
         sql = text(f"""
-            DROP TEMPORARY TABLE IF EXISTS {temp_tablename}
+            DROP TABLE IF EXISTS {temp_tablename}
         """)
 
         session.execute(sql)
@@ -290,17 +280,20 @@ class BasePostgresRepository:
             temp_tablename = self.temp_tablename
 
         column_sql = ", ".join(
-            f"`{column}`"
+            f"{column}"
             for column in columns
         )
         sql = f"""
-                LOAD DATA LOCAL INFILE '{file_path}'
-                INTO TABLE {temp_tablename}
-                FIELDS TERMINATED BY ','
-                ENCLOSED BY '"'
-                IGNORE 1 ROWS
-                ({column_sql});
-            """
+                COPY {temp_tablename}
+                ({column_sql})
+                FROM '/tmp/{file_path}'
+                WITH (
+                    FORMAT csv,
+                    HEADER true,
+                    DELIMITER ',',
+                    QUOTE '"'
+                );
+                """
         session.execute(text(sql))
         session.commit()
 
