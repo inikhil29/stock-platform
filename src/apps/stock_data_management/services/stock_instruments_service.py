@@ -6,7 +6,7 @@ import pandas as pd
 import time
 
 from apps.stock_data_management.infrastructure.clients.stock_instruments_client import StockInstrumentsClient
-from apps.stock_data_management.repositories.stock_instruments_repository import StockInstrumentsRepository
+from apps.stock_data_management.infrastructure.db.repositories.stock_instruments_repository import StockInstrumentsRepository
 
 from core.dataframe.engines.polars.reader import PolarsReader
 from core.dataframe.engines.polars.schema_validator import PolarsSchemaValidator

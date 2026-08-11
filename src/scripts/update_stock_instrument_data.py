@@ -2,7 +2,7 @@ import json
 import ijson
 from sqlalchemy.dialects.postgresql import insert
 from core.infrastructure.database.sql_database.db_context import get_upstox_db
-from apps.stock_data_management.models.stock_instruments_data import StockInstrumentsData
+from apps.stock_data_management.infrastructure.db.models.stock_instruments_data import StockInstrumentsData
 import requests
 import os
 from pathlib import Path

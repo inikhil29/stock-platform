@@ -2,7 +2,7 @@ from sqlalchemy import String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.models.base import PostgresBase
-from apps.stock_data_management.models.raw_historical_data_info import RawHistoricalDataInfo
+from apps.stock_data_management.infrastructure.db.models.raw_historical_data_info import RawHistoricalDataInfo
 
 
 class StockInstrumentsData(PostgresBase):

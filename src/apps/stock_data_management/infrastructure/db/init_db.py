@@ -1,6 +1,6 @@
 from apps.stock_data_management.infrastructure.db.session import mysql_engine, postgres_engine
 from core.models.base import MySQLBase, PostgresBase
-import apps.stock_data_management.models
+import apps.stock_data_management.infrastructure.db.models
 
 
 def create_tables():

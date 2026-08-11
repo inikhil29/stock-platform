@@ -1,5 +1,5 @@
 from sqlalchemy import func, select, text
-from apps.stock_data_management.models.raw_historical_data_info import RawHistoricalDataInfo
+from apps.stock_data_management.infrastructure.db.models.raw_historical_data_info import RawHistoricalDataInfo
 from core.repositories.base_postgres_repository import BasePostgresRepository
 from core.enum.candle_interval import CandleInterval
 from sqlalchemy.orm import Session, sessionmaker

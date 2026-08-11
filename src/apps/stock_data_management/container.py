@@ -1,20 +1,20 @@
 
 from apps.stock_data_management.infrastructure.clients.stock_historical_data_client import StockHistoricalDataClient
 from apps.stock_data_management.infrastructure.db.mongodb import get_database
-from apps.stock_data_management.models.company_profile import CompanyProfile
-from apps.stock_data_management.models.raw_historical_data_info import RawHistoricalDataInfo
-from apps.stock_data_management.repositories.company_profile_repostitory import CompanyProfileRepository
-from apps.stock_data_management.repositories.raw_historical_data_info_repository import StockRawHistoricalDataInfoRepository
-from apps.stock_data_management.repositories.stock_instruments_repository import StockInstrumentsRepository
-from apps.stock_data_management.repositories.stock_instruments_profile_repository import StockInstrumentsProfileRepository
+from apps.stock_data_management.infrastructure.db.models.company_profile import CompanyProfile
+from apps.stock_data_management.infrastructure.db.models.raw_historical_data_info import RawHistoricalDataInfo
+from apps.stock_data_management.infrastructure.db.repositories.company_profile_repostitory import CompanyProfileRepository
+from apps.stock_data_management.infrastructure.db.repositories.raw_historical_data_info_repository import StockRawHistoricalDataInfoRepository
+from apps.stock_data_management.infrastructure.db.repositories.stock_instruments_repository import StockInstrumentsRepository
+from apps.stock_data_management.infrastructure.db.repositories.stock_instruments_profile_repository import StockInstrumentsProfileRepository
 
 from apps.stock_data_management.infrastructure.db.session import MySQLSessionFactory
 from apps.stock_data_management.infrastructure.db.session import PostgresSessionFactory
-from apps.stock_data_management.models.stock_instruments_data import (
+from apps.stock_data_management.infrastructure.db.models.stock_instruments_data import (
     StockInstrumentsData
 )
 
-from apps.stock_data_management.models.instruments_profile import (
+from apps.stock_data_management.infrastructure.db.models.instruments_profile import (
     StockInstrumentsProfile
 )
 

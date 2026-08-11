@@ -8,7 +8,7 @@ from core.enum.candle_interval import CandleInterval
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from apps.stock_data_management.models.stock_instruments_data import StockInstrumentsData
+    from apps.stock_data_management.infrastructure.db.models.stock_instruments_data import StockInstrumentsData
 
 
 class RawHistoricalDataInfo(PostgresBase):

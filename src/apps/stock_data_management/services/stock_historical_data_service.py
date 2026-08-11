@@ -3,7 +3,7 @@ import calendar
 import json
 
 from apps.stock_data_management.infrastructure.clients.stock_historical_data_client import StockHistoricalDataClient
-from apps.stock_data_management.repositories.raw_historical_data_info_repository import StockRawHistoricalDataInfoRepository
+from apps.stock_data_management.infrastructure.db.repositories.raw_historical_data_info_repository import StockRawHistoricalDataInfoRepository
 from core.clients.aws_client import AwsClient
 from core.enum.candle_interval import CandleInterval
 from core.config.aws_settings import aws_settings
