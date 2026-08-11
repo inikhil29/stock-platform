@@ -26,11 +26,7 @@ class StockInstrumentsProfile(MongoBaseModel):
     )
     _indexes: ClassVar[list] = [
         {
-            "fields": ["instrument_id"],
-            "unique": True
-        },
-        {
-            "fields": ["instrument_key"],
+            "fields": ["isin"],
             "unique": True
         },
         {
@@ -44,9 +40,7 @@ class StockInstrumentsProfile(MongoBaseModel):
 
     ]
 
-    instrument_key: str
-
-    instrument_id: int
+    isin: str
 
     company_profile: str | None
 

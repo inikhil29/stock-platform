@@ -7,25 +7,23 @@ import time
 
 from apps.stock_data_management.infrastructure.clients.stock_instruments_client import StockInstrumentsClient
 from apps.stock_data_management.repositories.stock_instruments_repository import StockInstrumentsRepository
-from apps.stock_data_management.repositories.stock_instruments_profile_repository import StockInstrumentsProfileRepository
 
 from core.dataframe.engines.polars.reader import PolarsReader
 from core.dataframe.engines.polars.schema_validator import PolarsSchemaValidator
 from pathlib import Path
 from core.config.paths import DATA_DIR
 
+
 class StockInstrumentsService:
 
     def __init__(
         self,
         stock_instruments_repository: StockInstrumentsRepository,
-        stock_instruments_profile_repository: StockInstrumentsProfileRepository,
         stock_instrument_client: StockInstrumentsClient
     ):
 
         self._stock_instruments_repository = stock_instruments_repository
         self._stock_instruments_repository_valid_columns = self._stock_instruments_repository.get_valid_columns()
-        self._stock_instruments_profile_repository = stock_instruments_profile_repository
 
         self._stock_instrument_client = stock_instrument_client
 
@@ -101,32 +99,33 @@ class StockInstrumentsService:
             f"{uuid4().hex[:8]}.csv"
         )
         csv_file_path = Path(f"instrument_data/{csv_file_name}")
-        complete_csv_file_path =  DATA_DIR / csv_file_path
+        complete_csv_file_path = DATA_DIR / csv_file_path
         valid_dataframe.write_csv(complete_csv_file_path)
         dataframe_columns = valid_dataframe.columns
-        result = self._stock_instruments_repository.get_sync_report(csv_file_path=csv_file_path, valid_temp_table_columns=dataframe_columns)
+        result = self._stock_instruments_repository.get_sync_report(
+            csv_file_path=csv_file_path, valid_temp_table_columns=dataframe_columns)
         if result['update']:
             print("Update Records : ")
             polars_reader.read_dicts(result['update']).show_complete()
         else:
             print("Update Records : 0")
-        
+
         if result['insert']:
             print("Insert Records : ")
             polars_reader.read_dicts(result['insert']).show_complete()
         else:
             print("Insert Records : 0")
-        
+
         option = input("Make the insert update y/n : ")
         if option.__str__().lower() == 'y':
-            result = self._stock_instruments_repository.sync_report_with_existing_data(csv_file_path=csv_file_path, valid_temp_table_columns=dataframe_columns)
+            result = self._stock_instruments_repository.sync_report_with_existing_data(
+                csv_file_path=csv_file_path, valid_temp_table_columns=dataframe_columns)
             print(result)
         else:
             if option.__str__().lower() != 'n':
                 print("Invalid Option!")
-                
+
         csv_file_path.unlink(missing_ok=True)
-        
 
     # ---------------------------------
     # TRANSFORM RECORD
@@ -187,146 +186,6 @@ class StockInstrumentsService:
             f"{count}"
         )
 
-    # ---------------------------------
-    # UPDATE INSTRUMENTS PROFILE
-    # ---------------------------------
-
-    def update_instruments_profile(
-        self,
-        batch_size=1000,
-        sleep_time=0.2
-    ):
-
-        conditions = [
-            self._stock_instruments_repository.model.isin.isnot(None),
-            self._stock_instruments_repository.model.isin != ''
-
-        ]
-        instruments = (
-            self._stock_instruments_repository
-            .stream(
-                batch_size=batch_size,
-                conditions=conditions
-            )
-        )
-
-        processed = 0
-        failed = 0
-
-        for instrument in instruments:
-
-            try:
-
-                self._upadate_single_instrument_profile(
-                    instrument
-                )
-
-                processed += 1
-                print(
-                    f"Completed For :  {instrument.name} | {instrument.trading_symbol} | {instrument.instrument_key} | {instrument.isin}")
-                if processed % 100 == 0:
-
-                    print(
-                        f"Processed: "
-                        f"{processed}"
-                    )
-
-                time.sleep(sleep_time)
-
-            except Exception as e:
-
-                failed += 1
-
-                message = (
-                    f"Failed syncing "
-                    f"{instrument.instrument_key}: "
-                    f"{str(e)}"
-                )
-
-                print(message)
-
-        print(
-            f"Completed. "
-            f"Processed={processed}, "
-            f"Failed={failed}"
-        )
-
-    def _upadate_single_instrument_profile(
-        self,
-        instrument
-    ):
-
-        response = (
-            self._stock_instrument_client
-            .get_instrument_profile_from_upstox(
-                instrument.isin
-            )
-        )
-        if not response:
-
-            return
-
-        mongo_payload = (
-            self._build_instrument_profile_payload(
-                instrument,
-                response
-            )
-        )
-        self._stock_instruments_profile_repository.upsert_one(
-            {
-                "instrument_id":
-                instrument.id,
-                "instrument_key":
-                instrument.instrument_key
-            },
-            mongo_payload
-        )
-        self._stock_instruments_repository.update_one(
-            {
-                "id": instrument.id
-            },
-            {
-                "sector": response.get("sector", None),
-                "company_profile": response.get("company_profile", None)
-            }
-
-        )
-
-    def _build_instrument_profile_payload(
-        self,
-        instrument_data,
-        instrument_profile_data
-    ):
-
-        return {
-
-            "instrument_id":
-            instrument_data.id,
-
-            "instrument_key":
-            instrument_data.instrument_key,
-
-            "company_profile":
-            instrument_profile_data.get(
-                "company_profile"
-            ),
-
-            "sector":
-            instrument_profile_data.get(
-                "sector"
-            ),
-
-            "sector_market_cap_inr":
-            instrument_profile_data.get(
-                "sector_market_cap_inr"
-            ),
-
-            "sector_market_cap_usd":
-            instrument_profile_data.get(
-                "sector_market_cap_usd"
-            ),
-        }
-
     def getInstrumentDetails(self, trading_symbol=None, isin=None):
 
         filters = {}
@@ -342,3 +201,18 @@ class StockInstrumentsService:
         )
 
         return result
+
+    def get_company_instruments_stream(self, batch_size):
+        conditions = [
+            self._stock_instruments_repository.model.isin.isnot(None),
+            self._stock_instruments_repository.model.isin != ''
+        ]
+        instruments_stream = (
+            self._stock_instruments_repository
+            .stream(
+                batch_size=batch_size,
+                conditions=conditions
+            )
+        )
+
+        return instruments_stream

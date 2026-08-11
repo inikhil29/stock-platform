@@ -2,7 +2,9 @@ from apps.stock_data_management.container import StockDataManagementContainer
 
 
 stock_data_management_container = StockDataManagementContainer()
-stock_instrument_service = stock_data_management_container.get_stock_instrument_service()
+company_profile_management_service = stock_data_management_container.get_company_profile_management_service()
 
 
-stock_instrument_service.update_instruments_profile(batch_size=100)
+company_profile_management_service.update_instruments_profile(batch_size=100)
+
+# company_profile_management_service.update_instrument_profile('INE0KCE01017')

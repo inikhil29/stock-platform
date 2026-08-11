@@ -54,17 +54,6 @@ class StockInstrumentsData(PostgresBase):
         index=True,
     )
 
-    sector: Mapped[str | None] = mapped_column(
-        String(50),
-        nullable=True,
-        index=True,
-    )
-
-    company_profile: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-    )
-
     historical_data: Mapped[list["RawHistoricalDataInfo"]] = relationship(
         "RawHistoricalDataInfo",
         back_populates="instrument",

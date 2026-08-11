@@ -4,3 +4,4 @@ from .finance_metrics import FinanceMetrics
 from .financial_period_type import FinancialPeriodType
 from .financial_report_price_units import FinancialReportPriceUnits
 from .raw_historical_data_info import RawHistoricalDataInfo
+from .company_profile import CompanyProfile

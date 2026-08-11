@@ -1,4 +1,4 @@
-from sqlalchemy import text
+from sqlalchemy import text, select
 from sqlalchemy.dialects.postgresql import insert
 
 
@@ -184,7 +184,7 @@ class BasePostgresRepository:
         unique_columns=None
     ):
         if not records:
-            return 0
+            return
 
         unique_columns = unique_columns or []
 
@@ -199,10 +199,41 @@ class BasePostgresRepository:
         if not unique_columns:
             unique_columns = [i for i in update_dict]
 
-            stmt = stmt.on_conflict_do_update(
-                index_elements=unique_columns,
-                set_=update_dict
-            )
+        stmt = stmt.on_conflict_do_update(
+            index_elements=unique_columns,
+            set_=update_dict
+        )
+
+        with self.session_factory() as session:
+            result = session.execute(stmt)
+            session.commit()
+            return result.rowcount
+
+    def upsert(
+        self,
+        record,
+        unique_columns=None
+    ):
+        if not record:
+            return
+
+        unique_columns = unique_columns or []
+
+        stmt = insert(self.model).values(record)
+
+        update_dict = {
+            c.name: stmt.excluded[c.name]
+            for c in self.model.__table__.columns
+            if c.name != "id"
+            and c.name not in unique_columns
+        }
+        if not unique_columns:
+            unique_columns = [i for i in update_dict]
+
+        stmt = stmt.on_conflict_do_update(
+            index_elements=unique_columns,
+            set_=update_dict
+        )
 
         with self.session_factory() as session:
             result = session.execute(stmt)
@@ -214,13 +245,18 @@ class BasePostgresRepository:
     #  ---------------------------------
     def stream(self, filters=None, conditions=None, batch_size=1000):
         with self.session_factory() as session:
-            query = session.query(self.model)
+            stmt = select(self.model)
             if filters:
-                query = query.filter_by(**filters)
-            if conditions:
-                query = query.filter(*conditions)
+                stmt = stmt.filter_by(**filters)
 
-            for row in query.yield_per(batch_size):
+            if conditions:
+                stmt = stmt.where(*conditions)
+
+            result = session.scalars(
+                stmt.execution_options(yield_per=batch_size)
+            )
+
+            for row in result:
                 yield row
 
     # ---------------------------------
