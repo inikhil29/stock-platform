@@ -5,21 +5,20 @@ from core.models.base import MySQLBase
 from sqlalchemy.orm import Session, sessionmaker
 
 
-
 class BaseMySQLRepository:
 
     def __init__(
         self,
-        model:MySQLBase,
-        session_factory:sessionmaker[Session]
+        model: MySQLBase,
+        session: Session
     ):
 
         self.model = model
         self.tablename = model.__tablename__
         self.temp_tablename = f"tmp_{self.tablename}"
 
-        self.session_factory = (
-            session_factory
+        self._session = (
+            session
         )
 
     # ---------------------------------
@@ -28,17 +27,13 @@ class BaseMySQLRepository:
 
     def insert_one(self, data):
 
-        with self.session_factory() as session:
+        obj = self.model(**data)
 
-            obj = self.model(**data)
+        self._session.add(obj)
 
-            session.add(obj)
+        self._session.refresh(obj)
 
-            session.commit()
-
-            session.refresh(obj)
-
-            return obj
+        return obj
 
     # ---------------------------------
     # BULK INSERT
@@ -54,13 +49,9 @@ class BaseMySQLRepository:
             for record in records
         ]
 
-        with self.session_factory() as session:
-
-            session.bulk_save_objects(
-                objects
-            )
-
-            session.commit()
+        self._session.bulk_save_objects(
+            objects
+        )
 
     # ---------------------------------
     # FIND BY ID
@@ -68,15 +59,13 @@ class BaseMySQLRepository:
 
     def find_by_id(self, record_id):
 
-        with self.session_factory() as session:
-
-            return (
-                session.query(self.model)
-                .filter(
-                    self.model.id == record_id
-                )
-                .first()
+        return (
+            self._session.query(self.model)
+            .filter(
+                self.model.id == record_id
             )
+            .first()
+        )
 
     # ---------------------------------
     # FIND ONE
@@ -84,19 +73,17 @@ class BaseMySQLRepository:
 
     def find_one(self, filters):
 
-        with self.session_factory() as session:
+        result = (
+            self._session.query(self.model)
+            .filter_by(**filters)
+            .first()
+        )
 
-            result = (
-                session.query(self.model)
-                .filter_by(**filters)
-                .first()
-            )
-
-            return (
-                result.to_dict()
-                if result
-                else None
-            )
+        return (
+            result.to_dict()
+            if result
+            else None
+        )
 
     # ---------------------------------
     # FIND MANY
@@ -110,30 +97,28 @@ class BaseMySQLRepository:
         offset=0
     ):
 
-        with self.session_factory() as session:
+        query = self._session.query(
+            self.model
+        )
 
-            query = session.query(
-                self.model
+        if filters:
+
+            query = query.filter_by(
+                **filters
             )
 
-            if filters:
+        if conditions:
 
-                query = query.filter_by(
-                    **filters
-                )
-
-            if conditions:
-
-                query = query.filter(
-                    *conditions
-                )
-
-            return (
-                query
-                .offset(offset)
-                .limit(limit)
-                .all()
+            query = query.filter(
+                *conditions
             )
+
+        return (
+            query
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
 
     # ---------------------------------
     # UPDATE
@@ -145,17 +130,12 @@ class BaseMySQLRepository:
         update_data
     ):
 
-        with self.session_factory() as session:
-
-            count = (
-                session.query(self.model)
-                .filter_by(**filters)
-                .update(update_data)
-            )
-
-            session.commit()
-
-            return count
+        count = (
+            self._session.query(self.model)
+            .filter_by(**filters)
+            .update(update_data)
+        )
+        return count
 
     # ---------------------------------
     # DELETE
@@ -166,17 +146,13 @@ class BaseMySQLRepository:
         filters
     ):
 
-        with self.session_factory() as session:
+        count = (
+            self._session.query(self.model)
+            .filter_by(**filters)
+            .delete()
+        )
 
-            count = (
-                session.query(self.model)
-                .filter_by(**filters)
-                .delete()
-            )
-
-            session.commit()
-
-            return count
+        return count
 
     # ---------------------------------
     # BULK UPSERT
@@ -216,29 +192,25 @@ class BaseMySQLRepository:
             )
         )
 
-        with self.session_factory() as session:
+        result = self._session.execute(
+            stmt
+        )
 
-            result = session.execute(
-                stmt
-            )
-
-            session.commit()
-
-            return result.rowcount
+        return result.rowcount
 
     # ---------------------------------
     #  STREAM LARGE DATASETS
     #  ---------------------------------
     def stream(self, filters=None, conditions=None, batch_size=1000):
-        with self.session_factory() as session:
-            query = session.query(self.model)
-            if filters:
-                query = query.filter_by(**filters)
-            if conditions:
-                query = query.filter(*conditions)
 
-            for row in query.yield_per(batch_size):
-                yield row
+        query = self._session.query(self.model)
+        if filters:
+            query = query.filter_by(**filters)
+        if conditions:
+            query = query.filter(*conditions)
+
+        for row in query.yield_per(batch_size):
+            yield row
 
     # ---------------------------------
     # UTILS
@@ -272,8 +244,7 @@ class BaseMySQLRepository:
             LIKE {source_table}
         """)
 
-        session.execute(sql)
-        session.commit()
+        self._session.execute(sql)
 
         return temp_table
 
@@ -286,8 +257,7 @@ class BaseMySQLRepository:
             DROP TEMPORARY TABLE IF EXISTS {temp_tablename}
         """)
 
-        session.execute(sql)
-        session.commit()
+        self._session.execute(sql)
 
     def _load_data_to_temp_table_from_csv(self, session, file_path, columns, temp_tablename: str | None = None) -> str:
         if not temp_tablename:
@@ -305,7 +275,6 @@ class BaseMySQLRepository:
                 IGNORE 1 ROWS
                 ({column_sql});
             """
-        session.execute(text(sql))
-        session.commit()
+        self._session.execute(text(sql))
 
         return temp_tablename

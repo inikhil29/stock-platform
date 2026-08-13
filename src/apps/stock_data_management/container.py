@@ -1,11 +1,7 @@
 
 from apps.stock_data_management.infrastructure.clients.stock_historical_data_client import StockHistoricalDataClient
 from apps.stock_data_management.infrastructure.db.mongodb import get_database
-from apps.stock_data_management.infrastructure.db.models.company_profile import CompanyProfile
-from apps.stock_data_management.infrastructure.db.models.raw_historical_data_info import RawHistoricalDataInfo
-from apps.stock_data_management.infrastructure.db.repositories.company_profile_repostitory import CompanyProfileRepository
-from apps.stock_data_management.infrastructure.db.repositories.raw_historical_data_info_repository import StockRawHistoricalDataInfoRepository
-from apps.stock_data_management.infrastructure.db.repositories.stock_instruments_repository import StockInstrumentsRepository
+from apps.stock_data_management.infrastructure.db.postgres_unit_of_work import PostgresUnitOfWork
 from apps.stock_data_management.infrastructure.db.repositories.stock_instruments_profile_repository import StockInstrumentsProfileRepository
 
 from apps.stock_data_management.infrastructure.db.session import MySQLSessionFactory
@@ -46,14 +42,9 @@ class StockDataManagementContainer:
         )
         mongo_db = get_database()
 
-        # Instrument Service Setup
+        unit_of_work = PostgresUnitOfWork(PostgresSessionFactory)
 
-        self._stock_instruments_repository = (
-            StockInstrumentsRepository(
-                PostgresSessionFactory,
-                StockInstrumentsData,
-            )
-        )
+        # Instrument Service Setup
 
         self._stock_instrument_client = (
             StockInstrumentsClient(
@@ -64,8 +55,8 @@ class StockDataManagementContainer:
         self._stock_instrument_service = (
             StockInstrumentsService(
 
-                stock_instruments_repository=(
-                    self._stock_instruments_repository
+                unit_of_work=(
+                    unit_of_work
                 ),
 
                 stock_instrument_client=(
@@ -76,13 +67,6 @@ class StockDataManagementContainer:
 
         # Historical Data Service Setup
 
-        self._raw_historical_data_info_repository = (
-            StockRawHistoricalDataInfoRepository(
-                PostgresSessionFactory,
-                RawHistoricalDataInfo,
-            )
-        )
-
         self._stock_historical_data_client = (
             StockHistoricalDataClient(
                 self._upstox_client
@@ -91,7 +75,9 @@ class StockDataManagementContainer:
 
         self._stock_historical_data_service = (
             StockHistoricalDataService(
-                raw_historical_data_info_repository=self._raw_historical_data_info_repository,
+                unit_of_work=(
+                    unit_of_work
+                ),
                 stock_historical_data_client=self._stock_historical_data_client,
                 aws_client=self._aws_client,
             )
@@ -105,15 +91,12 @@ class StockDataManagementContainer:
             )
         )
 
-        self._company_profile_repository = CompanyProfileRepository(
-            PostgresSessionFactory,
-            CompanyProfile
-        )
-
         self._company_profile_service = CompanyProfileService(
+            unit_of_work=(
+                unit_of_work
+            ),
             stock_instruments_service=self._stock_instrument_service,
-            company_profile_repository=self._company_profile_repository,
-            stock_instruments_profile_repository=self._stock_instruments_profile_repository,
+            stock_instruments_profile_repository = self._stock_instruments_profile_repository,
             stock_instrument_client=self._stock_instrument_client
         )
 

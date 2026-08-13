@@ -1,7 +1,6 @@
 from core.repositories.base_mongo_repository import BaseMongoRepository
 
 
-
 class StockInstrumentsProfileRepository(BaseMongoRepository):
 
     def __init__(self, database, model):

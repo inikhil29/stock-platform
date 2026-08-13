@@ -3,6 +3,7 @@ import calendar
 import json
 
 from apps.stock_data_management.infrastructure.clients.stock_historical_data_client import StockHistoricalDataClient
+from apps.stock_data_management.infrastructure.db.postgres_unit_of_work import PostgresUnitOfWork
 from apps.stock_data_management.infrastructure.db.repositories.raw_historical_data_info_repository import StockRawHistoricalDataInfoRepository
 from core.clients.aws_client import AwsClient
 from core.enum.candle_interval import CandleInterval
@@ -11,8 +12,8 @@ from core.utilities.printing_utilities import clear_line
 
 
 class StockHistoricalDataService:
-    def __init__(self, raw_historical_data_info_repository: StockRawHistoricalDataInfoRepository, stock_historical_data_client: StockHistoricalDataClient, aws_client: AwsClient):
-        self._raw_historical_data_info_repository = raw_historical_data_info_repository
+    def __init__(self, unit_of_work: PostgresUnitOfWork, stock_historical_data_client: StockHistoricalDataClient, aws_client: AwsClient):
+        self._unit_of_work = unit_of_work
         self._stock_historical_data_client = stock_historical_data_client
         self._aws_client = aws_client
 
@@ -22,8 +23,12 @@ class StockHistoricalDataService:
 
             max_date_for_interval = self._get_max_date_limit_for_interval(
                 interval)
-            last_imported_date = self._get_last_imported_record_date(
-                instrument_key=instrument_key, interval=interval)
+            with self._unit_of_work as uow:
+                last_imported_date = self._get_last_imported_record_date(
+                    repository=uow.raw_historical_data_info_repository,
+                    instrument_key=instrument_key,
+                    interval=interval
+                )
 
             continue_import = False
             if last_imported_date:
@@ -68,7 +73,7 @@ class StockHistoricalDataService:
                 print(
                     f"\tSaved Data in S3 with KEY | {storage_key} | : Done", flush=True)
                 print(f"\tInserting record info to table ...", flush=True)
-                self._insert_update_historical_data_info_report(
+                self.insert_update_historical_data_info_report(
                     data=data, continue_import=continue_import)
                 clear_line()
                 print(f"\tInserted record info to table: Done", flush=True)
@@ -166,34 +171,31 @@ class StockHistoricalDataService:
 
         return res
 
-    def _get_last_imported_record_date(self, instrument_key: str, interval: CandleInterval) -> date | None:
+    def _get_last_imported_record_date(self, repository: StockRawHistoricalDataInfoRepository, instrument_key: str, interval: CandleInterval) -> date | None:
 
-        result = self._raw_historical_data_info_repository.get_last_inserted_record_for_instrument_by_inerval(
+        result = repository.get_last_inserted_record_for_instrument_by_interval(
             instrument_key=instrument_key, interval=interval.value)
         if result:
             return result.to_date
         return None
 
-    def _insert_historical_data_info_report(self, data) -> None:
+    def insert_update_historical_data_info_report(self, data, continue_import: bool | None = None) -> None:
+        with self._unit_of_work as uow:
 
-        self._raw_historical_data_info_repository.insert_one(
-            data=data)
+            if continue_import:
+                record_exists = uow.raw_historical_data_info_repository.find_one(
+                    data
+                )
+                if not record_exists:
+                    uow.raw_historical_data_info_repository.insert_one(
+                        data=data
+                    )
 
-    def _update_historical_data_info_report(self, data) -> None:
-        self._raw_historical_data_info_repository.update_one(
-            filters=data, update_data=data)
-
-    def _insert_update_historical_data_info_report(self, data, continue_import: bool | None = None) -> None:
-        if continue_import:
-            record_exists = self._raw_historical_data_info_repository.find_one(
-                data)
-            if not record_exists:
-                self._insert_historical_data_info_report(
-                    data=data)
-
+                else:
+                    uow.raw_historical_data_info_repository.update_one(
+                        data=data
+                    )
             else:
-                self._update_historical_data_info_report(
-                    data=data)
-        else:
-            self._insert_historical_data_info_report(
-                data=data)
+                uow.raw_historical_data_info_repository.insert_one(
+                    data=data
+                )

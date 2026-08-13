@@ -1,19 +1,21 @@
 from sqlalchemy import text
+from sqlalchemy.orm import Session
+from apps.stock_data_management.infrastructure.db.models.stock_instruments_data import StockInstrumentsData
 from core.repositories.base_postgres_repository import BasePostgresRepository
 
 
 class StockInstrumentsRepository(
-    BasePostgresRepository
+    BasePostgresRepository[StockInstrumentsData]
 ):
+    _model = StockInstrumentsData
 
-    def __init__(self, session_factory, model):
+    def __init__(self, session: Session):
 
         super().__init__(
-            model=model,
-            session_factory=session_factory
+            session=session
         )
 
-    def _update_instrument_table_comparing_with_temp(self, session, valid_temp_table_columns: list[str]) -> str:
+    def _update_instrument_table_comparing_with_temp(self, valid_temp_table_columns: list[str]) -> str:
 
         if not valid_temp_table_columns:
             raise Exception("No valid column list is provided.")
@@ -37,11 +39,10 @@ class StockInstrumentsRepository(
             FROM {temp_tablename} AS t 
             WHERE t.instrument_key = p.instrument_key AND ({where_clause});
             """
-        res = session.execute(text(sql))
-        session.commit()
+        res = self._session.execute(text(sql))
         return res.rowcount
 
-    def _insert_into_instrument_table_comparing_with_temp(self, session, valid_temp_table_columns: list[str]) -> str:
+    def _insert_into_instrument_table_comparing_with_temp(self, valid_temp_table_columns: list[str]) -> str:
 
         if not valid_temp_table_columns:
             raise Exception("No valid column list is provided.")
@@ -67,11 +68,10 @@ class StockInstrumentsRepository(
                 ON p.instrument_key = t.instrument_key
                 WHERE p.instrument_key IS NULL;
             """
-        res = session.execute(text(sql))
-        session.commit()
+        res = self._session.execute(text(sql))
         return res.rowcount
 
-    def _get_expected_affecting_row_counts(self, session, valid_temp_table_columns: list[str]) -> dict:
+    def _get_expected_affecting_row_counts(self, valid_temp_table_columns: list[str]) -> dict:
 
         if not valid_temp_table_columns:
             raise Exception("No valid column list is provided.")
@@ -99,11 +99,11 @@ class StockInstrumentsRepository(
             """
 
         return {
-            "update": session.execute(text(update_sql)).scalar(),
-            "insert": session.execute(text(insert_sql)).scalar(),
+            "update": self._session.execute(text(update_sql)).scalar(),
+            "insert": self._session.execute(text(insert_sql)).scalar(),
         }
 
-    def _get_expected_affecting_rows(self, session, valid_temp_table_columns: list[str]) -> dict:
+    def _get_expected_affecting_rows(self, valid_temp_table_columns: list[str]) -> dict:
 
         if not valid_temp_table_columns:
             raise Exception("No valid column list is provided.")
@@ -152,9 +152,9 @@ class StockInstrumentsRepository(
                         WHERE {where_clause}
                 """
 
-        update_res = session.execute(text(update_sql)).mappings().all()
+        update_res = self._session.execute(text(update_sql)).mappings().all()
 
-        insert_res = session.execute(text(insert_sql)).mappings().all()
+        insert_res = self._session.execute(text(insert_sql)).mappings().all()
 
         return {
             'update':  update_res,
@@ -162,40 +162,47 @@ class StockInstrumentsRepository(
         }
 
     def get_sync_report(self, csv_file_path, valid_temp_table_columns):
-        with self.session_factory() as session:
-            self._create_temp_table_like(session)
-            self._load_data_to_temp_table_from_csv(
-                session, csv_file_path, valid_temp_table_columns)
-            result = self._get_expected_affecting_rows(
-                session=session, valid_temp_table_columns=valid_temp_table_columns)
-            self._drop_temp_table(session=session)
-            return result
+
+        self._create_temp_table_like()
+        self._load_data_to_temp_table_from_csv(
+            csv_file_path,
+            valid_temp_table_columns
+        )
+        result = self._get_expected_affecting_rows(
+            valid_temp_table_columns=valid_temp_table_columns
+        )
+        self._drop_temp_table()
+        return result
 
     def sync_report_with_existing_data(self, csv_file_path, valid_temp_table_columns):
-        with self.session_factory() as session:
-            self._drop_temp_table(session=session)
-            self._create_temp_table_like(session)
-            print("Started Loading data into temporary table...", flush=True)
-            self._load_data_to_temp_table_from_csv(
-                session, csv_file_path, valid_temp_table_columns)
-            
-            print("Loading data into temporary table completed!!", flush=True)
-            
-            print("Started Updating Records...", flush=True)
-            
-            update_result = self._update_instrument_table_comparing_with_temp(
-                session=session, valid_temp_table_columns=valid_temp_table_columns)
-            print("Updating Records Completed!!", flush=True)
-            
-            print("Started Inserting Records...", flush=True)
-            
-            insert_result = self._insert_into_instrument_table_comparing_with_temp(
-                session=session, valid_temp_table_columns=valid_temp_table_columns)
-            
-            print("Inserting Records Completed!!", flush=True)
 
-            self._drop_temp_table(session=session)
-            return {
-                'insert': insert_result,
-                'update': update_result
-            }
+        self._drop_temp_table()
+        self._create_temp_table_like()
+        print("Started Loading data into temporary table...", flush=True)
+        self._load_data_to_temp_table_from_csv(
+            csv_file_path,
+            valid_temp_table_columns
+        )
+
+        print("Loading data into temporary table completed!!", flush=True)
+
+        print("Started Updating Records...", flush=True)
+
+        update_result = self._update_instrument_table_comparing_with_temp(
+            valid_temp_table_columns=valid_temp_table_columns
+        )
+        print("Updating Records Completed!!", flush=True)
+
+        print("Started Inserting Records...", flush=True)
+
+        insert_result = self._insert_into_instrument_table_comparing_with_temp(
+            valid_temp_table_columns=valid_temp_table_columns
+        )
+
+        print("Inserting Records Completed!!", flush=True)
+
+        self._drop_temp_table()
+        return {
+            'insert': insert_result,
+            'update': update_result
+        }

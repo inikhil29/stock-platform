@@ -1,22 +1,20 @@
 from sqlalchemy import text, select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session
 
+from typing import ClassVar, Generic, TypeVar
 
-class BasePostgresRepository:
-
+ModelT = TypeVar("ModelT")
+class BasePostgresRepository(Generic[ModelT]):
+    _model: ClassVar[type[ModelT]]
     def __init__(
         self,
-        model,
-        session_factory
+        session: Session
     ):
-
-        self.model = model
-        self.tablename = model.__tablename__
+        self.tablename = self._model.__tablename__
         self.temp_tablename = f"tmp_{self.tablename}"
 
-        self.session_factory = (
-            session_factory
-        )
+        self._session = session
 
     # ---------------------------------
     # INSERT ONE
@@ -24,17 +22,13 @@ class BasePostgresRepository:
 
     def insert_one(self, data):
 
-        with self.session_factory() as session:
+        obj = self._model(**data)
 
-            obj = self.model(**data)
+        self._session.add(obj)
 
-            session.add(obj)
+        self._session.flush()
 
-            session.commit()
-
-            session.refresh(obj)
-
-            return obj
+        return obj
 
     # ---------------------------------
     # BULK INSERT
@@ -46,33 +40,26 @@ class BasePostgresRepository:
             return
 
         objects = [
-            self.model(**record)
+            self._model(**record)
             for record in records
         ]
 
-        with self.session_factory() as session:
-
-            session.bulk_save_objects(
-                objects
-            )
-
-            session.commit()
-
+        self._session.bulk_save_objects(
+            objects
+        )
     # ---------------------------------
     # FIND BY ID
     # ---------------------------------
 
     def find_by_id(self, record_id):
 
-        with self.session_factory() as session:
-
-            return (
-                session.query(self.model)
-                .filter(
-                    self.model.id == record_id
-                )
-                .first()
+        return (
+            self._session.query(self._model)
+            .filter(
+                self._model.id == record_id
             )
+            .first()
+        )
 
     # ---------------------------------
     # FIND ONE
@@ -80,19 +67,17 @@ class BasePostgresRepository:
 
     def find_one(self, filters):
 
-        with self.session_factory() as session:
+        result = (
+            self._session.query(self._model)
+            .filter_by(**filters)
+            .first()
+        )
 
-            result = (
-                session.query(self.model)
-                .filter_by(**filters)
-                .first()
-            )
-
-            return (
-                result.to_dict()
-                if result
-                else None
-            )
+        return (
+            result.to_dict()
+            if result
+            else None
+        )
 
     # ---------------------------------
     # FIND MANY
@@ -106,30 +91,28 @@ class BasePostgresRepository:
         offset=0
     ):
 
-        with self.session_factory() as session:
+        query = self._session.query(
+            self._model
+        )
 
-            query = session.query(
-                self.model
+        if filters:
+
+            query = query.filter_by(
+                **filters
             )
 
-            if filters:
+        if conditions:
 
-                query = query.filter_by(
-                    **filters
-                )
-
-            if conditions:
-
-                query = query.filter(
-                    *conditions
-                )
-
-            return (
-                query
-                .offset(offset)
-                .limit(limit)
-                .all()
+            query = query.filter(
+                *conditions
             )
+
+        return (
+            query
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
 
     # ---------------------------------
     # UPDATE
@@ -141,17 +124,12 @@ class BasePostgresRepository:
         update_data
     ):
 
-        with self.session_factory() as session:
-
-            count = (
-                session.query(self.model)
-                .filter_by(**filters)
-                .update(update_data)
-            )
-
-            session.commit()
-
-            return count
+        count = (
+            self._session.query(self._model)
+            .filter_by(**filters)
+            .update(update_data)
+        )
+        return count
 
     # ---------------------------------
     # DELETE
@@ -162,17 +140,12 @@ class BasePostgresRepository:
         filters
     ):
 
-        with self.session_factory() as session:
-
-            count = (
-                session.query(self.model)
-                .filter_by(**filters)
-                .delete()
-            )
-
-            session.commit()
-
-            return count
+        count = (
+            self._session.query(self._model)
+            .filter_by(**filters)
+            .delete()
+        )
+        return count
 
     # ---------------------------------
     # BULK UPSERT
@@ -188,11 +161,11 @@ class BasePostgresRepository:
 
         unique_columns = unique_columns or []
 
-        stmt = insert(self.model).values(records)
+        stmt = insert(self._model).values(records)
 
         update_dict = {
             c.name: stmt.excluded[c.name]
-            for c in self.model.__table__.columns
+            for c in self._model.__table__.columns
             if c.name != "id"
             and c.name not in unique_columns
         }
@@ -204,10 +177,8 @@ class BasePostgresRepository:
             set_=update_dict
         )
 
-        with self.session_factory() as session:
-            result = session.execute(stmt)
-            session.commit()
-            return result.rowcount
+        result = self._session.execute(stmt)
+        return result.rowcount
 
     def upsert(
         self,
@@ -219,11 +190,11 @@ class BasePostgresRepository:
 
         unique_columns = unique_columns or []
 
-        stmt = insert(self.model).values(record)
+        stmt = insert(self._model).values(record)
 
         update_dict = {
             c.name: stmt.excluded[c.name]
-            for c in self.model.__table__.columns
+            for c in self._model.__table__.columns
             if c.name != "id"
             and c.name not in unique_columns
         }
@@ -235,29 +206,26 @@ class BasePostgresRepository:
             set_=update_dict
         )
 
-        with self.session_factory() as session:
-            result = session.execute(stmt)
-            session.commit()
-            return result.rowcount
+        result = self._session.execute(stmt)
+        return result.rowcount
 
     # ---------------------------------
     #  STREAM LARGE DATASETS
     #  ---------------------------------
     def stream(self, filters=None, conditions=None, batch_size=1000):
-        with self.session_factory() as session:
-            stmt = select(self.model)
-            if filters:
-                stmt = stmt.filter_by(**filters)
+        stmt = select(self._model)
+        if filters:
+            stmt = stmt.filter_by(**filters)
 
-            if conditions:
-                stmt = stmt.where(*conditions)
+        if conditions:
+            stmt = stmt.where(*conditions)
 
-            result = session.scalars(
-                stmt.execution_options(yield_per=batch_size)
-            )
+        result = self._session.scalars(
+            stmt.execution_options(yield_per=batch_size)
+        )
 
-            for row in result:
-                yield row
+        for row in result:
+            yield row
 
     # ---------------------------------
     # UTILS
@@ -270,14 +238,13 @@ class BasePostgresRepository:
             col.name: col.type
 
             for col
-            in self.model.__table__.columns
+            in self._model.__table__.columns
 
             if col.name != "id"
         }
 
     def _create_temp_table_like(
         self,
-        session,
         source_table: str | None = None,
     ):
 
@@ -294,12 +261,10 @@ class BasePostgresRepository:
             """
                    )
 
-        session.execute(sql)
-        session.commit()
-
+        self._session.execute(sql)
         return temp_table
 
-    def _drop_temp_table(self, session, temp_tablename: str | None = None):
+    def _drop_temp_table(self, temp_tablename: str | None = None):
 
         if not temp_tablename:
             temp_tablename = self.temp_tablename
@@ -308,10 +273,9 @@ class BasePostgresRepository:
             DROP TABLE IF EXISTS {temp_tablename}
         """)
 
-        session.execute(sql)
-        session.commit()
+        self._session.execute(sql)
 
-    def _load_data_to_temp_table_from_csv(self, session, file_path, columns, temp_tablename: str | None = None) -> str:
+    def _load_data_to_temp_table_from_csv(self, file_path, columns, temp_tablename: str | None = None) -> str:
         if not temp_tablename:
             temp_tablename = self.temp_tablename
 
@@ -330,7 +294,6 @@ class BasePostgresRepository:
                     QUOTE '"'
                 );
                 """
-        session.execute(text(sql))
-        session.commit()
+        self._session.execute(text(sql))
 
         return temp_tablename

@@ -6,6 +6,7 @@ import pandas as pd
 import time
 
 from apps.stock_data_management.infrastructure.clients.stock_instruments_client import StockInstrumentsClient
+from apps.stock_data_management.infrastructure.db.postgres_unit_of_work import PostgresUnitOfWork
 from apps.stock_data_management.infrastructure.db.repositories.stock_instruments_repository import StockInstrumentsRepository
 
 from core.dataframe.engines.polars.reader import PolarsReader
@@ -18,12 +19,13 @@ class StockInstrumentsService:
 
     def __init__(
         self,
-        stock_instruments_repository: StockInstrumentsRepository,
+        unit_of_work: PostgresUnitOfWork,
         stock_instrument_client: StockInstrumentsClient
     ):
 
-        self._stock_instruments_repository = stock_instruments_repository
-        self._stock_instruments_repository_valid_columns = self._stock_instruments_repository.get_valid_columns()
+        self._unit_of_work = unit_of_work
+        with self._unit_of_work as uow:
+            self._stock_instruments_valid_columns = uow.stock_instruments_repository.get_valid_columns()
 
         self._stock_instrument_client = stock_instrument_client
 
@@ -59,7 +61,7 @@ class StockInstrumentsService:
                     transformed = (
                         self._transform_record(
                             row,
-                            self._stock_instruments_repository_valid_columns
+                            self._stock_instruments_valid_columns
                         )
                     )
 
@@ -72,7 +74,7 @@ class StockInstrumentsService:
 
                     if len(batch) >= batch_size:
 
-                        self._process_batch(
+                        self.process_batch(
                             batch
                         )
 
@@ -93,7 +95,7 @@ class StockInstrumentsService:
         polar_schema_validator = PolarsSchemaValidator()
 
         valid_dataframe = polar_schema_validator.apply(
-            dataframe=dataframe, schema=self._stock_instruments_repository_valid_columns, ignore_columns=['id', 'sector', 'company_profile'])
+            dataframe=dataframe, schema=self._stock_instruments_valid_columns, ignore_columns=['id', 'sector', 'company_profile'])
         csv_file_name = (
             f"{datetime.now():%Y%m%d_%H%M%S}_"
             f"{uuid4().hex[:8]}.csv"
@@ -102,28 +104,29 @@ class StockInstrumentsService:
         complete_csv_file_path = DATA_DIR / csv_file_path
         valid_dataframe.write_csv(complete_csv_file_path)
         dataframe_columns = valid_dataframe.columns
-        result = self._stock_instruments_repository.get_sync_report(
-            csv_file_path=csv_file_path, valid_temp_table_columns=dataframe_columns)
-        if result['update']:
-            print("Update Records : ")
-            polars_reader.read_dicts(result['update']).show_complete()
-        else:
-            print("Update Records : 0")
-
-        if result['insert']:
-            print("Insert Records : ")
-            polars_reader.read_dicts(result['insert']).show_complete()
-        else:
-            print("Insert Records : 0")
-
-        option = input("Make the insert update y/n : ")
-        if option.__str__().lower() == 'y':
-            result = self._stock_instruments_repository.sync_report_with_existing_data(
+        with self._unit_of_work as uow:
+            result = uow.stock_instruments_repository.get_sync_report(
                 csv_file_path=csv_file_path, valid_temp_table_columns=dataframe_columns)
-            print(result)
-        else:
-            if option.__str__().lower() != 'n':
-                print("Invalid Option!")
+            if result['update']:
+                print("Update Records : ")
+                polars_reader.read_dicts(result['update']).show_complete()
+            else:
+                print("Update Records : 0")
+
+            if result['insert']:
+                print("Insert Records : ")
+                polars_reader.read_dicts(result['insert']).show_complete()
+            else:
+                print("Insert Records : 0")
+
+            option = input("Make the insert update y/n : ")
+            if option.__str__().lower() == 'y':
+                result = uow.stock_instruments_repository.sync_report_with_existing_data(
+                    csv_file_path=csv_file_path, valid_temp_table_columns=dataframe_columns)
+                print(result)
+            else:
+                if option.__str__().lower() != 'n':
+                    print("Invalid Option!")
 
         csv_file_path.unlink(missing_ok=True)
 
@@ -165,7 +168,7 @@ class StockInstrumentsService:
     # ---------------------------------
     # PROCESS BATCH
     # ---------------------------------
-    def _process_batch(
+    def process_batch(
         self,
         batch
     ):
@@ -174,19 +177,20 @@ class StockInstrumentsService:
             f"Processing batch: {batch}"
             f"{len(batch)}"
         )
+        with self._unit_of_work as uow:
 
-        count = (
-            self._stock_instruments_repository.bulk_upsert(
-                batch
+            count = (
+                uow.stock_instruments_repository.bulk_upsert(
+                    batch
+                )
             )
-        )
 
         print(
             f"Inserted/Updated: "
             f"{count}"
         )
 
-    def getInstrumentDetails(self, trading_symbol=None, isin=None):
+    def get_instrument_details(self, trading_symbol=None, isin=None):
 
         filters = {}
 
@@ -195,24 +199,26 @@ class StockInstrumentsService:
 
         if isin:
             filters["isin"] = isin
+        with self._unit_of_work as uow:
 
-        result = self._stock_instruments_repository.find_one(
-            filters=filters
-        )
+            result = uow.stock_instruments_repository.find_one(
+                filters=filters
+            )
 
         return result
 
     def get_company_instruments_stream(self, batch_size):
-        conditions = [
-            self._stock_instruments_repository.model.isin.isnot(None),
-            self._stock_instruments_repository.model.isin != ''
-        ]
-        instruments_stream = (
-            self._stock_instruments_repository
-            .stream(
-                batch_size=batch_size,
-                conditions=conditions
+        with self._unit_of_work as uow:
+            conditions = [
+                uow.stock_instruments_repository._model.isin.isnot(None),
+                uow.stock_instruments_repository._model.isin != ''
+            ]
+            instruments_stream = (
+                uow.stock_instruments_repository
+                .stream(
+                    batch_size=batch_size,
+                    conditions=conditions
+                )
             )
-        )
 
         return instruments_stream

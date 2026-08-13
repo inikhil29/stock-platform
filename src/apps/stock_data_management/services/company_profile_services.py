@@ -1,6 +1,7 @@
 import time
 
 from apps.stock_data_management.infrastructure.clients.stock_instruments_client import StockInstrumentsClient
+from apps.stock_data_management.infrastructure.db.postgres_unit_of_work import PostgresUnitOfWork
 from apps.stock_data_management.infrastructure.db.repositories.company_profile_repostitory import CompanyProfileRepository
 from apps.stock_data_management.infrastructure.db.repositories.stock_instruments_profile_repository import StockInstrumentsProfileRepository
 from apps.stock_data_management.services.stock_instruments_service import StockInstrumentsService
@@ -9,16 +10,15 @@ from apps.stock_data_management.services.stock_instruments_service import StockI
 class CompanyProfileService:
     def __init__(
         self,
+        unit_of_work: PostgresUnitOfWork,
         stock_instruments_service: StockInstrumentsService,
-        company_profile_repository: CompanyProfileRepository,
         stock_instruments_profile_repository: StockInstrumentsProfileRepository,
         stock_instrument_client: StockInstrumentsClient
     ):
 
         self._stock_instruments_service = stock_instruments_service
         self._stock_instruments_profile_repository = stock_instruments_profile_repository
-        self._company_profile_repository = company_profile_repository
-
+        self._unit_of_work = unit_of_work
         self._stock_instrument_client = stock_instrument_client
 
     # ---------------------------------
@@ -85,7 +85,6 @@ class CompanyProfileService:
                 isin
             )
         )
-        print(response)
         if not response:
 
             return
@@ -103,15 +102,17 @@ class CompanyProfileService:
             },
             mongo_payload
         )
-        self._company_profile_repository.upsert(
-            {
-                "isin": isin,
-                "sector": response.get("sector", None),
-                "company_profile": response.get("company_profile", None)
-            },
-            ['isin']
+        with self._unit_of_work as uow:
 
-        )
+            uow.company_profiles_repository.upsert(
+                {
+                    "isin": isin,
+                    "sector": response.get("sector", None),
+                    "company_profile": response.get("company_profile", None)
+                },
+                ['isin']
+
+            )
 
     def _build_instrument_profile_payload(
         self,

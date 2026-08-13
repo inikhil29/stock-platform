@@ -10,7 +10,7 @@ BASE_DIR = (
 )
 
 
-instrument_key = 'NSE_EQ|INE0KCE01017'
+instrument_key = 'NSE_EQ|INE119A01028'
 interval = CandleInterval.D1
 
 stock_data_management_container = StockDataManagementContainer()
