@@ -30,8 +30,9 @@ class CompanyProfileService:
         batch_size=1000,
         sleep_time=0.2
     ):
-        company_instruments_stream = self._stock_instruments_service.get_company_instruments_stream(
-            batch_size)
+        company_instruments_stream = self._stock_instruments_service.get_missing_companies_stream(
+            batch_size
+        )
 
         processed = 0
         failed = 0

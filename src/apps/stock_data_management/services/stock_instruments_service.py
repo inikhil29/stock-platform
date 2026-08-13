@@ -222,3 +222,12 @@ class StockInstrumentsService:
             )
 
         return instruments_stream
+
+    def get_missing_companies_stream(self, batch_size: int | None = None):
+
+        with self._unit_of_work as uow:
+            stream = uow.company_profile_queries_repository.get_missing_companies_stream(
+                batch_size=batch_size
+            )
+
+        return stream

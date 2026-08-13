@@ -1,5 +1,6 @@
 from sqlalchemy.orm import sessionmaker, Session
 
+from apps.stock_data_management.infrastructure.db.queries_repositories.company_profile_queries import CompanyProfieQueries
 from apps.stock_data_management.infrastructure.db.repositories.company_profile_repostitory import (
     CompanyProfileRepository,
 )
@@ -31,7 +32,12 @@ class PostgresUnitOfWork:
                 self._session
             )
         )
-
+        
+        self.company_profile_queries_repository = (
+            CompanyProfieQueries(
+                self._session
+            )
+        )
         return self
 
     def __exit__(
