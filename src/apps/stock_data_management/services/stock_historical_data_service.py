@@ -6,7 +6,7 @@ from apps.stock_data_management.infrastructure.clients.stock_historical_data_cli
 from apps.stock_data_management.infrastructure.db.postgres_unit_of_work import PostgresUnitOfWork
 from apps.stock_data_management.infrastructure.db.repositories.raw_historical_data_info_repository import StockRawHistoricalDataInfoRepository
 from core.clients.aws_client import AwsClient
-from core.enum.candle_interval import CandleInterval
+from core.enum.candle_interval_enum import CandleInterval
 from core.config.aws_settings import aws_settings
 from core.utilities.printing_utilities import clear_line
 

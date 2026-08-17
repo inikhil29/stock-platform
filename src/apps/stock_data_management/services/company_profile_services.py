@@ -2,7 +2,7 @@ import time
 
 from apps.stock_data_management.infrastructure.clients.stock_instruments_client import StockInstrumentsClient
 from apps.stock_data_management.infrastructure.db.postgres_unit_of_work import PostgresUnitOfWork
-from apps.stock_data_management.infrastructure.db.repositories.company_profile_repostitory import CompanyProfileRepository
+from apps.stock_data_management.infrastructure.db.repositories.company_profile_repository import CompanyProfileRepository
 from apps.stock_data_management.infrastructure.db.repositories.stock_instruments_profile_repository import StockInstrumentsProfileRepository
 from apps.stock_data_management.services.stock_instruments_service import StockInstrumentsService
 

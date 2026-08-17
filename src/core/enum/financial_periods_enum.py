@@ -1,6 +1,4 @@
 from enum import Enum
-import re
-
 
 class FinancialPeriod(str, Enum):
     Y   = "y"

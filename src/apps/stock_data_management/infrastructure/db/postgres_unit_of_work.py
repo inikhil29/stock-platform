@@ -1,7 +1,7 @@
 from sqlalchemy.orm import sessionmaker, Session
 
 from apps.stock_data_management.infrastructure.db.queries_repositories.company_profile_queries import CompanyProfieQueries
-from apps.stock_data_management.infrastructure.db.repositories.company_profile_repostitory import (
+from apps.stock_data_management.infrastructure.db.repositories.company_profile_repository import (
     CompanyProfileRepository,
 )
 from apps.stock_data_management.infrastructure.db.repositories.raw_historical_data_info_repository import (

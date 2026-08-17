@@ -3,7 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, date
 from sqlalchemy import TIMESTAMP, Enum as SQLEnum, func, Date, ForeignKey, UniqueConstraint
 
-from core.enum.candle_interval import CandleInterval
+from core.enum.candle_interval_enum import CandleInterval
 
 from typing import TYPE_CHECKING
 

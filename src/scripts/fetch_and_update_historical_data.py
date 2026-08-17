@@ -3,7 +3,7 @@ from pathlib import Path
 from apps.stock_data_management.container import (
     StockDataManagementContainer
 )
-from core.enum.candle_interval import CandleInterval
+from core.enum.candle_interval_enum import CandleInterval
 
 BASE_DIR = (
     Path(__file__).resolve().parent
