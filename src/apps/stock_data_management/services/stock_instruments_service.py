@@ -95,7 +95,7 @@ class StockInstrumentsService:
         polar_schema_validator = PolarsSchemaValidator()
 
         valid_dataframe = polar_schema_validator.apply(
-            dataframe=dataframe, schema=self._stock_instruments_valid_columns, ignore_columns=['id', 'sector', 'company_profile'])
+            dataframe=dataframe, schema=self._stock_instruments_valid_columns, ignore_columns=['id', 'sector', 'company_profile', 'created_at', 'updated_at'])
         csv_file_name = (
             f"{datetime.now():%Y%m%d_%H%M%S}_"
             f"{uuid4().hex[:8]}.csv"

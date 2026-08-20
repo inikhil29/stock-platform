@@ -1,4 +1,5 @@
-from sqlalchemy import Enum as SQLEnum
+from datetime import datetime
+from sqlalchemy import TIMESTAMP, Enum as SQLEnum, func
 
 from core.enum.financial_data_source_enum import FinancialDataSourceEnum
 from core.models.base import PostgresBase
@@ -18,8 +19,17 @@ class FinanceDataSource(PostgresBase):
     source_name: Mapped[FinancialDataSourceEnum] = mapped_column(
         SQLEnum(
             FinancialDataSourceEnum,
-            values_callable=lambda enum: [e.value for e in enum]
         ),
         nullable=False,
         unique=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now()
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now()
     )

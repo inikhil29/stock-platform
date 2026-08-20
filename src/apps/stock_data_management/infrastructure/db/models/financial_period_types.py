@@ -1,13 +1,12 @@
-from datetime import date
+from datetime import date, datetime
+from typing import TYPE_CHECKING
 
-from apps.stock_data_management.infrastructure.db.models.financial_statements import FinancialStatement
 from core.models.base import PostgresBase
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import CheckConstraint, Enum as SQLEnum, Date, UniqueConstraint
+from sqlalchemy import TIMESTAMP, CheckConstraint, Enum as SQLEnum, Date, UniqueConstraint, func
 
 from core.enum.financial_periods_enum import FinancialPeriod
 from core.enum.financial_quarter_enum import FinancialQuarter
-
 
 class FinancialPeriodTypes(PostgresBase):
     __tablename__ = 'financial_period_types'
@@ -34,6 +33,16 @@ class FinancialPeriodTypes(PostgresBase):
         Date,
         nullable=False
     )
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now()
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now()
+    )
 
     __table_args__ = (
         CheckConstraint(
@@ -42,5 +51,5 @@ class FinancialPeriodTypes(PostgresBase):
         ),
         UniqueConstraint(
             financial_period_type, end_date, name="unq_period_type_check"
-        )
+        ),
     )

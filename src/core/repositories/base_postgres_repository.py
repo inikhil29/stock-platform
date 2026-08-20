@@ -1,12 +1,15 @@
-from sqlalchemy import text, select
+from sqlalchemy import func, inspect, text, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from typing import ClassVar, Generic, TypeVar
 
 ModelT = TypeVar("ModelT")
+
+
 class BasePostgresRepository(Generic[ModelT]):
     _model: ClassVar[type[ModelT]]
+
     def __init__(
         self,
         session: Session
@@ -163,10 +166,15 @@ class BasePostgresRepository(Generic[ModelT]):
 
         stmt = insert(self._model).values(records)
 
+        primary_key_columns = {
+            column.name
+            for column in inspect(self._model).primary_key
+        }
+
         update_dict = {
             c.name: stmt.excluded[c.name]
             for c in self._model.__table__.columns
-            if c.name != "id"
+            if c.name not in primary_key_columns
             and c.name not in unique_columns
         }
         if not unique_columns:
@@ -192,10 +200,13 @@ class BasePostgresRepository(Generic[ModelT]):
 
         stmt = insert(self._model).values(record)
 
+        primary_key_columns = [
+            column.name for column in inspect(self._model).primary_key]
+
         update_dict = {
             c.name: stmt.excluded[c.name]
             for c in self._model.__table__.columns
-            if c.name != "id"
+            if c.name not in primary_key_columns
             and c.name not in unique_columns
         }
         if not unique_columns:
@@ -236,11 +247,8 @@ class BasePostgresRepository(Generic[ModelT]):
         return {
 
             col.name: col.type
-
             for col
             in self._model.__table__.columns
-
-            if col.name != "id"
         }
 
     def _create_temp_table_like(
@@ -255,8 +263,8 @@ class BasePostgresRepository(Generic[ModelT]):
             temp_table = f"tmp_{source_table}"
         sql = text(f"""
             CREATE TEMPORARY TABLE IF NOT EXISTS {temp_table}(
-                LIKE {source_table}  
-                INCLUDING ALL  
+                LIKE {source_table}
+                INCLUDING ALL
             )
             """
                    )
@@ -297,3 +305,15 @@ class BasePostgresRepository(Generic[ModelT]):
         self._session.execute(text(sql))
 
         return temp_tablename
+
+    def _upsert_and_get_id(self, insert_data: dict, update_data: dict, unique_columns: list) -> int:
+        stmt = insert(self._model).values(
+            insert_data
+        )
+        primary_key = inspect(self._model).primary_key[0]
+        stmt = stmt.on_conflict_do_update(
+            index_elements=unique_columns,
+            set_=update_data
+        ).returning(primary_key)
+
+        return self._session.scalar(stmt)

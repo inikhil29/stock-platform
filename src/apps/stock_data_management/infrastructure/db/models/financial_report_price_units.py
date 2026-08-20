@@ -1,9 +1,14 @@
-from sqlalchemy import Integer, String, UniqueConstraint, Enum as SQLEnum
+from datetime import datetime
+from typing import TYPE_CHECKING
+
+from sqlalchemy import TIMESTAMP, Integer, String, UniqueConstraint, Enum as SQLEnum, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from apps.stock_data_management.infrastructure.db.models.financial_statements import FinancialStatement
 from core.enum.price_unit_enum import PriceUnitEnum
 from core.models.base import PostgresBase
+
+if TYPE_CHECKING:
+    from apps.stock_data_management.infrastructure.db.models.financial_statements import FinancialStatement
 
 
 class FinancialReportPriceUnits(PostgresBase):
@@ -21,6 +26,16 @@ class FinancialReportPriceUnits(PostgresBase):
         ),
         nullable=False,
         unique=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now()
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now()
     )
 
     finance_statement_data: Mapped[list["FinancialStatement"]] = relationship(

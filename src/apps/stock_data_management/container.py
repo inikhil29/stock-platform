@@ -1,4 +1,5 @@
 
+from apps.stock_data_management.infrastructure.clients.company_financial_data_client import CompanyFinancialDataClient
 from apps.stock_data_management.infrastructure.clients.stock_historical_data_client import StockHistoricalDataClient
 from apps.stock_data_management.infrastructure.db.mongodb import get_database
 from apps.stock_data_management.infrastructure.db.postgres_unit_of_work import PostgresUnitOfWork
@@ -23,6 +24,7 @@ from apps.stock_data_management.infrastructure.clients.stock_instruments_client 
     StockInstrumentsClient
 )
 
+from apps.stock_data_management.services.company_finance_services import CompanyFinanceServices
 from apps.stock_data_management.services.company_profile_services import CompanyProfileService
 from apps.stock_data_management.services.stock_historical_data_service import StockHistoricalDataService
 from apps.stock_data_management.services.stock_instruments_service import (
@@ -96,8 +98,20 @@ class StockDataManagementContainer:
                 unit_of_work
             ),
             stock_instruments_service=self._stock_instrument_service,
-            stock_instruments_profile_repository = self._stock_instruments_profile_repository,
+            stock_instruments_profile_repository=self._stock_instruments_profile_repository,
             stock_instrument_client=self._stock_instrument_client
+        )
+
+        # Financial Service Setup
+
+        self._company_finance_data_client = CompanyFinancialDataClient(
+            self._upstox_client
+        )
+        self._company_financial_data_service = CompanyFinanceServices(
+            unit_of_work=(
+                unit_of_work
+            ),
+            stock_instrument_client=self._company_finance_data_client
         )
 
     def get_stock_instrument_service(self):
@@ -108,3 +122,6 @@ class StockDataManagementContainer:
 
     def get_company_profile_management_service(self):
         return self._company_profile_service
+
+    def get_company_financial_data_service(self):
+        return self._company_financial_data_service

@@ -1,4 +1,6 @@
-from sqlalchemy import String, Text
+from datetime import datetime
+
+from sqlalchemy import TIMESTAMP, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.models.base import PostgresBase

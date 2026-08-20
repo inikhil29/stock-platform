@@ -1,14 +1,14 @@
 from sqlalchemy import func, select, exists
 from sqlalchemy.orm import Session
-from apps.stock_data_management.infrastructure.db.models.finance_data_source import FinanceDataSource
-from core.enum.financial_data_source_enum import FinancialDataSourceEnum
+from apps.stock_data_management.infrastructure.db.models.financial_report_price_units import FinancialReportPriceUnits
+from core.enum.price_unit_enum import PriceUnitEnum
 from core.repositories.base_postgres_repository import BasePostgresRepository
 
 
-class FinanceDataSourceRepository(
-    BasePostgresRepository[FinanceDataSource]
+class FinancialReportPriceUnitsRepository(
+    BasePostgresRepository[FinancialReportPriceUnits]
 ):
-    _model = FinanceDataSource
+    _model = FinancialReportPriceUnits
 
     def __init__(self, session: Session):
 
@@ -16,13 +16,13 @@ class FinanceDataSourceRepository(
             session=session
         )
 
-    def upsert_and_get_id(self, source_name: FinancialDataSourceEnum) -> int:
+    def upsert_and_get_id(self, financial_report_price_unit: PriceUnitEnum) -> int:
         insert_data = {
-            self._model.source_name: source_name,
+            self._model.units: financial_report_price_unit,
         }
 
         unique_columns = [
-            self._model.source_name,
+            self._model.units,
         ]
 
         update_data = {

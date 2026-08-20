@@ -1,12 +1,14 @@
+from datetime import datetime
+
 from core.enum.finance_metrics_enum import FinancialMetric
 from core.models.base import PostgresBase
 
 from sqlalchemy.orm import mapped_column, Mapped
-from sqlalchemy import String, UniqueConstraint, Enum as SQLEnum
+from sqlalchemy import TIMESTAMP, String, UniqueConstraint, Enum as SQLEnum, func
 
 
 class FinanceMetrics(PostgresBase):
-    
+
     __tablename__ = 'finance_metrics'
     finance_metric_id: Mapped[int] = mapped_column(
         primary_key=True,
@@ -17,14 +19,18 @@ class FinanceMetrics(PostgresBase):
         unique=True,
         nullable=False,
     )
-    
+
     display_name: Mapped[str] = mapped_column(
         String(50),
         nullable=True,
     )
-    
-    __table_args__ = (
-        UniqueConstraint(
-            metric_code, display_name, name="unq_metric_name"
-        )
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now()
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now()
     )

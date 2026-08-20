@@ -1,11 +1,14 @@
+from datetime import datetime
+
 from core.models.base import PostgresBase
 from sqlalchemy.orm import mapped_column, Mapped
-from sqlalchemy import String, Text
+from sqlalchemy import TIMESTAMP, String, Text, func
+
 
 class CompanyProfile(PostgresBase):
-    
+
     __tablename__ = "company_profile"
-    
+
     id: Mapped[int] = mapped_column(
         primary_key=True,
         autoincrement=True
