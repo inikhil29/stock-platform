@@ -39,3 +39,4 @@ Thumbs.db
 # Optional
 src/apps/stock_info/data/
 src/data/
+src/apps/stock_data_management/postgres-alembic/versions/*
