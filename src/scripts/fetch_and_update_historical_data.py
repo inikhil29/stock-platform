@@ -10,8 +10,8 @@ BASE_DIR = (
 )
 
 
-instrument_key = 'BSE_EQ|INE794C01016'
-interval = CandleInterval.MN1
+instrument_key = 'NSE_EQ|INE119A01028'
+interval = CandleInterval.D1
 
 stock_data_management_container = StockDataManagementContainer()
 historical_data_service = stock_data_management_container.get_stock_historical_data_service()

@@ -31,6 +31,7 @@ class StockHistoricalDataService:
                     interval=interval
                 )
 
+            # If last imported date exists then make import as continue
             continue_import = False
             if last_imported_date:
                 max_date_for_interval = last_imported_date
@@ -189,19 +190,10 @@ class StockHistoricalDataService:
         with self._unit_of_work as uow:
 
             if continue_import:
-                record_exists = uow.raw_historical_data_info_repository.find_one(
+
+                record_id = uow.raw_historical_data_info_repository.upsert_and_get_id(
                     data
                 )
-                if not record_exists:
-                    uow.raw_historical_data_info_repository.insert_one(
-                        data=data
-                    )
-
-                else:
-                    uow.raw_historical_data_info_repository.update_one(
-                        filters=data,
-                        update_data=data
-                    )
             else:
                 uow.raw_historical_data_info_repository.insert_one(
                     data=data
@@ -258,8 +250,8 @@ class StockHistoricalDataService:
 
                     print(
                         f"\t\tInserting the candle records...", flush=True)
-                    uow.stock_candle_data_repository.insert_many(
-                        insert_records)
+                    uow.stock_candle_data_repository.make_bulk_upsert(
+                        insert_records,)
                     clear_line()
                     print(
                         f"\t\tInserting the candle records: Done", flush=True)
@@ -274,7 +266,7 @@ class StockHistoricalDataService:
                     f"\t\tUpdating the base table to mark as processed: Done", flush=True)
 
                 clear_line()
-            
+
             clear_line()
             clear_line()
             clear_line()

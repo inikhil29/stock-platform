@@ -17,6 +17,25 @@ class StockRawHistoricalDataInfoRepository(
             session=session
         )
 
+    def upsert_and_get_id(self, data) -> int:
+        insert_data = data
+
+        unique_columns = [
+            self._model.instrument_key,
+            self._model.interval,
+            self._model.from_date,
+            self._model.to_date,
+        ]
+
+        update_data = {
+            self._model.updated_at: func.now(),
+            self._model.processed_timestamp: None
+        }
+
+        result = super()._upsert_and_get_id(insert_data=insert_data,
+                                            update_data=update_data, unique_columns=unique_columns)
+        return result
+
     def get_last_inserted_record_for_instrument_by_interval(self, instrument_key: str, interval: CandleInterval) -> RawHistoricalDataInfo | None:
 
         stmt = (select(self._model).where(self._model.instrument_key ==

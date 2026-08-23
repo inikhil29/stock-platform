@@ -157,7 +157,8 @@ class BasePostgresRepository(Generic[ModelT]):
     def bulk_upsert(
         self,
         records,
-        unique_columns=None
+        unique_columns=None,
+        update_dict=None
     ):
         if not records:
             return
@@ -171,12 +172,14 @@ class BasePostgresRepository(Generic[ModelT]):
             for column in inspect(self._model).primary_key
         }
 
-        update_dict = {
-            c.name: stmt.excluded[c.name]
-            for c in self._model.__table__.columns
-            if c.name not in primary_key_columns
-            and c.name not in unique_columns
-        }
+        if not update_dict:
+
+            update_dict = {
+                c.name: stmt.excluded[c.name]
+                for c in self._model.__table__.columns
+                if c.name not in primary_key_columns
+                and c.name not in unique_columns
+            }
         if not unique_columns:
             unique_columns = [i for i in update_dict]
 
