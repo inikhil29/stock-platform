@@ -48,6 +48,10 @@ class RawHistoricalDataInfo(PostgresBase):
         onupdate=func.now()
     )
 
+    processed_timestamp: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        nullable=True
+    )
     instrument: Mapped["StockInstrumentsData"] = relationship(
         "StockInstrumentsData",
         back_populates="historical_data"

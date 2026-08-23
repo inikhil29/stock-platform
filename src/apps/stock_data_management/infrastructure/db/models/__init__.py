@@ -8,6 +8,7 @@ from .financial_period_types import FinancialPeriodTypes
 from .financial_report_price_units import FinancialReportPriceUnits
 from .financial_statement_records import FinancialStatementRecords
 from .financial_statements import FinancialStatement
+from .stock_candle_data import StockCandleData
 
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "FinancialReportPriceUnits",
     "FinancialStatementRecords",
     "FinancialStatement",
+    "StockCandleData"
 ]

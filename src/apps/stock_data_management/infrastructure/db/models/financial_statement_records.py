@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from core.models.base import PostgresBase
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import TIMESTAMP, Float, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy import TIMESTAMP, Float, ForeignKey, Integer, Numeric, String, UniqueConstraint, func
 
 if TYPE_CHECKING:
     from apps.stock_data_management.infrastructure.db.models.finance_metrics import FinanceMetrics
@@ -43,7 +43,7 @@ class FinancialStatementRecords(PostgresBase):
         index=True,
     )
     value: Mapped[float] = mapped_column(
-        Float,
+        Numeric(20, 6),
         nullable=False,
         index=True,
     )

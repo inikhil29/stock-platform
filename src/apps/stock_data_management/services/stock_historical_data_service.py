@@ -1,6 +1,7 @@
 from datetime import date, datetime
 import calendar
 import json
+from typing import BinaryIO
 
 from apps.stock_data_management.infrastructure.clients.stock_historical_data_client import StockHistoricalDataClient
 from apps.stock_data_management.infrastructure.db.postgres_unit_of_work import PostgresUnitOfWork
@@ -95,6 +96,11 @@ class StockHistoricalDataService:
         content_type = "application/json"
         s3_storage = self._aws_client.get_s3_storage()
         s3_storage.upload_bytes(default_bucket, key, data, content_type)
+
+    def _get_historical_data_s3_stream(self, key: str) -> BinaryIO | None:
+        default_bucket = aws_settings.AWS_HISTORICAL_DATA_S3_BUCKET
+        s3_storage = self._aws_client.get_s3_storage()
+        return s3_storage.download_stream(default_bucket, key)
 
     def _fetch_historical_data(self, instrument_key, unit, interval_option, from_date, to_date):
         result = self._stock_historical_data_client.get_historical_data_from_upstox(
@@ -193,9 +199,83 @@ class StockHistoricalDataService:
 
                 else:
                     uow.raw_historical_data_info_repository.update_one(
-                        data=data
+                        filters=data,
+                        update_data=data
                     )
             else:
                 uow.raw_historical_data_info_repository.insert_one(
                     data=data
                 )
+
+    def insert_candle_data_from_s3(self):
+        filter = None
+        last_id = None
+        print("Started Importing...")
+        while True:
+            record = None
+            with self._unit_of_work as uow:
+                if last_id:
+                    filter = self._unit_of_work.raw_historical_data_info_repository._model.id > last_id
+                record = uow.raw_historical_data_info_repository.get_unprocessed_record(
+                    filter=filter)
+
+            if not record:
+                break
+
+            storage_key = f"historical-data/{record.instrument_key}/{record.interval.value}/{record.from_date} - {record.to_date}"
+            print(f"\tStarting the process for key {storage_key} ", flush=True)
+            last_id = record.id
+            print(f"\t\tFetching data from S3 ...", flush=True)
+            with self._get_historical_data_s3_stream(key=storage_key) as data_stream:
+                data = json.load(data_stream)
+            clear_line()
+            print(
+                f"\t\tFetched data from S3: Done", flush=True)
+
+            candle_records = data.get("candles", [])
+            print(
+                f"\t\tTotal Records to be processed: {len(candle_records)}", flush=True)
+            insert_records = []
+            if candle_records and len(candle_records) > 0:
+                for candle_record in candle_records:
+                    print(
+                        f"\t\tProcessing for candle record: {candle_record}", flush=True)
+                    record = {
+                        "raw_historical_data_info_id": last_id,
+                        "candle_timestamp": candle_record[0],
+                        "open": candle_record[1],
+                        "high": candle_record[2],
+                        "low": candle_record[3],
+                        "close": candle_record[4],
+                        "volume": candle_record[5],
+                        "open_interest": candle_record[6],
+                    }
+
+                    insert_records.append(record)
+                    clear_line()
+            with self._unit_of_work as uow:
+                if insert_records:
+
+                    print(
+                        f"\t\tInserting the candle records...", flush=True)
+                    uow.stock_candle_data_repository.insert_many(
+                        insert_records)
+                    clear_line()
+                    print(
+                        f"\t\tInserting the candle records: Done", flush=True)
+                    clear_line()
+
+                print(
+                    f"\t\tUpdating the base table to mark as processed...", flush=True)
+                uow.raw_historical_data_info_repository.mark_as_procesed(
+                    last_id)
+                clear_line()
+                print(
+                    f"\t\tUpdating the base table to mark as processed: Done", flush=True)
+
+                clear_line()
+            
+            clear_line()
+            clear_line()
+            clear_line()
+        print("Done!")

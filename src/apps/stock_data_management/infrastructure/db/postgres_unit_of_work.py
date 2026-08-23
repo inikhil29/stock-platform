@@ -13,6 +13,7 @@ from apps.stock_data_management.infrastructure.db.repositories.financial_stateme
 from apps.stock_data_management.infrastructure.db.repositories.raw_historical_data_info_repository import (
     StockRawHistoricalDataInfoRepository,
 )
+from apps.stock_data_management.infrastructure.db.repositories.stock_candle_data_repository import StockCandleDataRepository
 from apps.stock_data_management.infrastructure.db.repositories.stock_instruments_repository import (
     StockInstrumentsRepository,
 )
@@ -40,6 +41,12 @@ class PostgresUnitOfWork:
 
         self.raw_historical_data_info_repository = (
             StockRawHistoricalDataInfoRepository(
+                self._session
+            )
+        )
+
+        self.stock_candle_data_repository = (
+            StockCandleDataRepository(
                 self._session
             )
         )

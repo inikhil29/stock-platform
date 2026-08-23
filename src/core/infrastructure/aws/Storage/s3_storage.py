@@ -1,6 +1,7 @@
 
+from contextlib import contextmanager
 from io import BytesIO
-from typing import BinaryIO
+from typing import BinaryIO, Generator, Iterator
 
 from botocore.exceptions import ClientError
 
@@ -84,18 +85,23 @@ class S3Storage:
 
         return response["Body"].read()
 
+    @contextmanager
     def download_stream(
         self,
         bucket: str,
         key: str
-    ) -> BinaryIO:
+    ) -> Generator[BinaryIO, None, None]:
 
         response = self._client.get_object(
             Bucket=bucket,
             Key=key
         )
+        body = response["Body"]
+        try:
 
-        return response["Body"]
+            yield body
+        finally:
+            body.close()
 
     def exists(
         self,

@@ -9,10 +9,6 @@ BASE_DIR = (
     Path(__file__).resolve().parent
 )
 
-
-instrument_key = 'BSE_EQ|INE794C01016'
-interval = CandleInterval.MN1
-
 stock_data_management_container = StockDataManagementContainer()
 historical_data_service = stock_data_management_container.get_stock_historical_data_service()
-historical_data_service.fetch_and_store_all_raw_historical_data_in_s3(instrument_key=instrument_key, interval=interval)
+historical_data_service.insert_candle_data_from_s3()
