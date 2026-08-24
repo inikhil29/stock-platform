@@ -1,4 +1,4 @@
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 from apps.stock_data_management.infrastructure.db.models.stock_instruments_data import StockInstrumentsData
 from core.repositories.base_postgres_repository import BasePostgresRepository
@@ -206,3 +206,16 @@ class StockInstrumentsRepository(
             'insert': insert_result,
             'update': update_result
         }
+
+    def fetch_instrument_keys_from_isin(self, isin: str):
+        stmt = select(
+            self._model.instrument_key
+        ).where(
+            self._model.isin == isin
+        )
+
+        result = self._session.scalars(
+            statement=stmt
+        ).all()
+
+        return result

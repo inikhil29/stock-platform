@@ -109,13 +109,15 @@ class StockInstrumentsService:
                 csv_file_path=csv_file_path, valid_temp_table_columns=dataframe_columns)
             if result['update']:
                 print("Update Records : ")
-                polars_reader.read_dicts(result['update'], infer_schema_length=None).show_complete()
+                polars_reader.read_dicts(
+                    result['update'], infer_schema_length=None).show_complete()
             else:
                 print("Update Records : 0")
 
             if result['insert']:
                 print("Insert Records : ")
-                polars_reader.read_dicts(result['insert'], infer_schema_length=None).show_complete()
+                polars_reader.read_dicts(
+                    result['insert'], infer_schema_length=None).show_complete()
             else:
                 print("Insert Records : 0")
 
@@ -231,3 +233,7 @@ class StockInstrumentsService:
             )
 
         return stream
+
+    def fetch_instrument_keys_from_isin(self, isin: str):
+        with self._unit_of_work as uow:
+            return uow.stock_instruments_repository.fetch_instrument_keys_from_isin(isin=isin)

@@ -86,8 +86,6 @@ class StockHistoricalDataService:
                 print(
                     f"Processed for {instrument_key} from Date {from_date} - {to_date} : Done", flush=True)
                 clear_line()
-
-            print("Done!!")
         except Exception as e:
             raise e
 
@@ -200,14 +198,18 @@ class StockHistoricalDataService:
                 )
 
     def insert_candle_data_from_s3(self):
-        filter = None
         last_id = None
-        print("Started Importing...")
+        print("Started Importing...", flush=True)
         while True:
             record = None
+            # --------------------------------
+            # Get next unprocessed source row
+            # --------------------------------
             with self._unit_of_work as uow:
+                filter = None
                 if last_id:
                     filter = self._unit_of_work.raw_historical_data_info_repository._model.id > last_id
+
                 record = uow.raw_historical_data_info_repository.get_unprocessed_record(
                     filter=filter)
 
@@ -216,7 +218,13 @@ class StockHistoricalDataService:
 
             storage_key = f"historical-data/{record.instrument_key}/{record.interval.value}/{record.from_date} - {record.to_date}"
             print(f"\tStarting the process for key {storage_key} ", flush=True)
-            last_id = record.id
+            source_record_id = record.id
+            last_id = source_record_id
+
+            # --------------------------------
+            # S3
+            # --------------------------------
+
             print(f"\t\tFetching data from S3 ...", flush=True)
             with self._get_historical_data_s3_stream(key=storage_key) as data_stream:
                 data = json.load(data_stream)
@@ -228,23 +236,37 @@ class StockHistoricalDataService:
             print(
                 f"\t\tTotal Records to be processed: {len(candle_records)}", flush=True)
             insert_records = []
-            if candle_records and len(candle_records) > 0:
-                for candle_record in candle_records:
-                    print(
-                        f"\t\tProcessing for candle record: {candle_record}", flush=True)
-                    record = {
-                        "raw_historical_data_info_id": last_id,
-                        "candle_timestamp": candle_record[0],
-                        "open": candle_record[1],
-                        "high": candle_record[2],
-                        "low": candle_record[3],
-                        "close": candle_record[4],
-                        "volume": candle_record[5],
-                        "open_interest": candle_record[6],
-                    }
+            # --------------------------------
+            # Transform + batch insert
+            # --------------------------------
+            for candle_record in candle_records:
+                record = {
+                    "raw_historical_data_info_id": source_record_id,
+                    "candle_timestamp": candle_record[0],
+                    "open": candle_record[1],
+                    "high": candle_record[2],
+                    "low": candle_record[3],
+                    "close": candle_record[4],
+                    "volume": candle_record[5],
+                    "open_interest": candle_record[6],
+                }
 
-                    insert_records.append(record)
-                    clear_line()
+                insert_records.append(record)
+                if len(insert_records) == 5000:
+                    with self._unit_of_work as uow:
+                        print(
+                            f"\t\tInserting the candle records...", flush=True)
+                        uow.stock_candle_data_repository.make_bulk_upsert(
+                            insert_records,)
+                        insert_records = []
+                        clear_line()
+                        print(
+                            f"\t\tInserted the candle records: Done", flush=True)
+                        clear_line()
+
+            # --------------------------------
+            # Final batch + mark processed
+            # --------------------------------
             with self._unit_of_work as uow:
                 if insert_records:
 
@@ -254,13 +276,13 @@ class StockHistoricalDataService:
                         insert_records,)
                     clear_line()
                     print(
-                        f"\t\tInserting the candle records: Done", flush=True)
+                        f"\t\tInserted the candle records: Done", flush=True)
                     clear_line()
 
                 print(
                     f"\t\tUpdating the base table to mark as processed...", flush=True)
                 uow.raw_historical_data_info_repository.mark_as_procesed(
-                    last_id)
+                    source_record_id)
                 clear_line()
                 print(
                     f"\t\tUpdating the base table to mark as processed: Done", flush=True)
@@ -270,4 +292,3 @@ class StockHistoricalDataService:
             clear_line()
             clear_line()
             clear_line()
-        print("Done!")
