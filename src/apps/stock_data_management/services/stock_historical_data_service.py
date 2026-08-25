@@ -208,7 +208,7 @@ class StockHistoricalDataService:
             with self._unit_of_work as uow:
                 filter = None
                 if last_id:
-                    filter = self._unit_of_work.raw_historical_data_info_repository._model.id > last_id
+                    filter = uow.raw_historical_data_info_repository._model.id > last_id
 
                 record = uow.raw_historical_data_info_repository.get_unprocessed_record(
                     filter=filter)
@@ -281,7 +281,7 @@ class StockHistoricalDataService:
 
                 print(
                     f"\t\tUpdating the base table to mark as processed...", flush=True)
-                uow.raw_historical_data_info_repository.mark_as_procesed(
+                uow.raw_historical_data_info_repository.mark_as_processed(
                     source_record_id)
                 clear_line()
                 print(

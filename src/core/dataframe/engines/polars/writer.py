@@ -12,10 +12,12 @@ class PolarsDataWriter(IDataWriter):
         path: str,
         **kwargs,
     ):
-        if isinstance(dataframe, pl.LazyFrame):
-            dataframe.collect().write_csv(path, **kwargs)
+        df = dataframe.native if isinstance(dataframe, PolarsDataFrame) else dataframe
+        if isinstance(df, pl.LazyFrame):
+            df.collect().write_csv(path, **kwargs)
         else:
             dataframe.write_csv(path, **kwargs)
+            df.write_csv(path, **kwargs)
 
     def write_parquet(
         self,
@@ -23,10 +25,12 @@ class PolarsDataWriter(IDataWriter):
         path: str,
         **kwargs,
     ):
-        if isinstance(dataframe, pl.LazyFrame):
-            dataframe.collect().write_parquet(path, **kwargs)
+        df = dataframe.native if isinstance(dataframe, PolarsDataFrame) else dataframe
+        if isinstance(df, pl.LazyFrame):
+            df.collect().write_parquet(path, **kwargs)
         else:
             dataframe.write_parquet(path, **kwargs)
+            df.write_parquet(path, **kwargs)
 
     def write_json(
         self,
@@ -34,10 +38,12 @@ class PolarsDataWriter(IDataWriter):
         path: str,
         **kwargs,
     ):
-        if isinstance(dataframe, pl.LazyFrame):
-            dataframe.collect().write_json(path, **kwargs)
+        df = dataframe.native if isinstance(dataframe, PolarsDataFrame) else dataframe
+        if isinstance(df, pl.LazyFrame):
+            df.collect().write_json(path, **kwargs)
         else:
             dataframe.write_json(path, **kwargs)
+            df.write_json(path, **kwargs)
 
     def write_database(
         self,
@@ -46,7 +52,8 @@ class PolarsDataWriter(IDataWriter):
         connection,
         **kwargs,
     ):
-        if isinstance(dataframe, pl.LazyFrame):
-            dataframe.collect().write_database(table=table, connection=connection, **kwargs)
+        df = dataframe.native if isinstance(dataframe, PolarsDataFrame) else dataframe
+        if isinstance(df, pl.LazyFrame):
+            df.collect().write_database(table_name=table, connection=connection, **kwargs)
         else:
-            dataframe.write_parquet(table=table, connection=connection, **kwargs)
+            df.write_database(table_name=table, connection=connection, **kwargs)

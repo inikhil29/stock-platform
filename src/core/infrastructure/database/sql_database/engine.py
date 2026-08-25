@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 
 def create_db_engine(
     connection_string: str,
-    connect_args:dict = {}
+    connect_args: dict | None = {}
 ):
 
     return create_engine(
@@ -13,5 +13,5 @@ def create_db_engine(
         pool_pre_ping=True,
         pool_recycle=1800,
         echo=False,
-        connect_args= connect_args
+        connect_args=connect_args
     )

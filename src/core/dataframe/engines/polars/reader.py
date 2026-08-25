@@ -30,7 +30,7 @@ class PolarsReader(IDataReader):
 
     def read_excel(self, path: str, **kwargs):
         source = Path(path)
-        dataframe = pl.read_parquet(
+        dataframe = pl.read_excel(
             source,
             **kwargs,
         )
@@ -58,7 +58,7 @@ class PolarsReader(IDataReader):
     def read_database(self, query: str, connection: Engine, **kwargs):
         dataframe = pl.read_database(
             query=query,
-            connection=connection
+            connection=connection,
             ** kwargs,
         )
 

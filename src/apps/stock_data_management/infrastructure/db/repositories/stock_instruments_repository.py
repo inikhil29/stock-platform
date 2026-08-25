@@ -15,7 +15,7 @@ class StockInstrumentsRepository(
             session=session
         )
 
-    def _update_instrument_table_comparing_with_temp(self, valid_temp_table_columns: list[str]) -> str:
+    def _update_instrument_table_comparing_with_temp(self, valid_temp_table_columns: list[str]) -> int:
 
         if not valid_temp_table_columns:
             raise Exception("No valid column list is provided.")
@@ -42,7 +42,7 @@ class StockInstrumentsRepository(
         res = self._session.execute(text(sql))
         return res.rowcount
 
-    def _insert_into_instrument_table_comparing_with_temp(self, valid_temp_table_columns: list[str]) -> str:
+    def _insert_into_instrument_table_comparing_with_temp(self, valid_temp_table_columns: list[str]) -> int:
 
         if not valid_temp_table_columns:
             raise Exception("No valid column list is provided.")
@@ -51,18 +51,18 @@ class StockInstrumentsRepository(
         valid_columns = [k for k, v in self.get_valid_columns(
         ).items() if k in valid_temp_table_columns]
 
-        coloumn_sql = ", ".join(
+        column_sql = ", ".join(
             [f"{col}" for col in valid_columns]
         )
-        temp_table_coloumn_sql = ", ".join(
+        temp_table_column_sql = ", ".join(
             [f"t.{col}" for col in valid_columns]
         )
 
         sql = f"""
                 INSERT INTO {source_table}
-                ({coloumn_sql})
+                ({column_sql})
                 SELECT
-                {temp_table_coloumn_sql}
+                {temp_table_column_sql}
                 FROM {temp_tablename} t
                 LEFT JOIN {source_table} p
                 ON p.instrument_key = t.instrument_key
@@ -89,7 +89,7 @@ class StockInstrumentsRepository(
                     WHERE p.instrument_key IS NULL;
                 """
         where_clause = "\nOR ".join(
-            f"COALESCE(p.{c}, '')  COALESCE(t.{c}, '')"
+            f"COALESCE(p.{c}, '') <> COALESCE(t.{c}, '')"
             for c in valid_columns
         )
 
@@ -112,13 +112,13 @@ class StockInstrumentsRepository(
         valid_columns = [k for k, v in self.get_valid_columns(
         ).items() if k in valid_temp_table_columns]
 
-        coloumn_sql = ", ".join(
+        insert_column_sql = ", ".join(
             [f"t.{col}" for col in valid_columns]
         )
 
         insert_sql = f"""
                         SELECT
-                        {coloumn_sql}
+                        {insert_column_sql}
                         FROM {temp_tablename} t
                         LEFT JOIN {source_table} p
                         ON p.instrument_key = t.instrument_key

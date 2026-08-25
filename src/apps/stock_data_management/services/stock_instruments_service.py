@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from uuid import uuid4
 
@@ -13,6 +14,8 @@ from core.dataframe.engines.polars.reader import PolarsReader
 from core.dataframe.engines.polars.schema_validator import PolarsSchemaValidator
 from pathlib import Path
 from core.config.paths import DATA_DIR
+
+logger = logging.getLogger(__name__)
 
 
 class StockInstrumentsService:
@@ -80,12 +83,12 @@ class StockInstrumentsService:
 
                         batch.clear()
                 except Exception as e:
+                    logger.exception("Error processing row %d: %s", row_number, e)
+                    raise
 
-                    print(
-                        f"Error row "
-                        f"{row_number}: {e}"
-                    )
-                    quit()
+            if batch:
+                self.process_batch(batch)
+                batch.clear()
 
     def sync_instruments_new(self, json_file_path):
         polars_reader = PolarsReader()
@@ -102,11 +105,12 @@ class StockInstrumentsService:
         )
         csv_file_path = Path(f"instrument_data/{csv_file_name}")
         complete_csv_file_path = DATA_DIR / csv_file_path
-        valid_dataframe.write_csv(complete_csv_file_path)
+        valid_dataframe.write_csv(str(complete_csv_file_path))
         dataframe_columns = valid_dataframe.columns
-        with self._unit_of_work as uow:
-            result = uow.stock_instruments_repository.get_sync_report(
-                csv_file_path=csv_file_path, valid_temp_table_columns=dataframe_columns)
+        try:
+            with self._unit_of_work as uow:
+                result = uow.stock_instruments_repository.get_sync_report(
+                    csv_file_path=csv_file_path, valid_temp_table_columns=dataframe_columns)
             if result['update']:
                 print("Update Records : ")
                 polars_reader.read_dicts(
@@ -129,8 +133,8 @@ class StockInstrumentsService:
             else:
                 if option.__str__().lower() != 'n':
                     print("Invalid Option!")
-
-        csv_file_path.unlink(missing_ok=True)
+        finally:
+            complete_csv_file_path.unlink(missing_ok=True)
 
     # ---------------------------------
     # TRANSFORM RECORD
@@ -176,8 +180,7 @@ class StockInstrumentsService:
     ):
 
         print(
-            f"Processing batch: {batch}"
-            f"{len(batch)}"
+            f"Processing batch: {len(batch)} records"
         )
         with self._unit_of_work as uow:
 
@@ -209,21 +212,16 @@ class StockInstrumentsService:
 
         return result
 
-    def get_company_instruments_stream(self, batch_size):
+    def get_company_instruments_stream(self, batch_size=1000):
         with self._unit_of_work as uow:
             conditions = [
                 uow.stock_instruments_repository._model.isin.isnot(None),
                 uow.stock_instruments_repository._model.isin != ''
             ]
-            instruments_stream = (
-                uow.stock_instruments_repository
-                .stream(
-                    batch_size=batch_size,
-                    conditions=conditions
-                )
+            yield from uow.stock_instruments_repository.stream(
+                batch_size=batch_size,
+                conditions=conditions
             )
-
-        return instruments_stream
 
     def get_missing_companies_stream(self, batch_size: int | None = None):
 

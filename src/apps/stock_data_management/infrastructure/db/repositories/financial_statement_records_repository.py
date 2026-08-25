@@ -1,3 +1,4 @@
+from decimal import Decimal
 from sqlalchemy import func, select, exists
 from sqlalchemy.orm import Session
 from apps.stock_data_management.infrastructure.db.models.financial_statement_records import FinancialStatementRecords
@@ -15,7 +16,13 @@ class FinancialStatementRecordsRepository(
             session=session
         )
 
-    def upsert_and_get_id(self, financial_statement_id: int, financial_period_type_id: int, finance_metric_id: int, value: int) -> int:
+    def upsert_and_get_id(
+        self,
+        financial_statement_id: int,
+        financial_period_type_id: int,
+        finance_metric_id: int,
+        value: float | int | Decimal
+    ) -> int:
         insert_data = {
             self._model.financial_statement_id: financial_statement_id,
             self._model.financial_period_type_id: financial_period_type_id,
@@ -30,9 +37,13 @@ class FinancialStatementRecordsRepository(
         ]
 
         update_data = {
+            self._model.value: value,
             self._model.updated_at: func.now()
         }
 
-        result = super()._upsert_and_get_id(insert_data=insert_data,
-                                            update_data=update_data, unique_columns=unique_columns)
+        result = self._upsert_and_get_id(
+            insert_data=insert_data,
+            update_data=update_data,
+            unique_columns=unique_columns
+        )
         return result

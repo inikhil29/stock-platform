@@ -33,11 +33,14 @@ class StockHistoricalDataClient:
             self._upstox_client
             .get_valid_token()
         )
-        endpoint = f"/v3/historical-candle/{instrument_key}/{unit}/{interval_option}/{to_date}/{from_date}"
+        if from_date:
+            endpoint = f"/v3/historical-candle/{instrument_key}/{unit}/{interval_option}/{to_date}/{from_date}"
+        else:
+            endpoint = f"/v3/historical-candle/{instrument_key}/{unit}/{interval_option}/{to_date}"
+
         headers = {
             "Accept": "application/json",
-            "Authorization":
-            f"Bearer {access_token}"
+            "Authorization": f"Bearer {access_token}"
         }
         response = self._http.get_json(
             endpoint,

@@ -45,7 +45,7 @@ class StockRawHistoricalDataInfoRepository(
 
         return res
 
-    def get_unprocessed_records_strem(self, filter=None, batch_size: int | None = 1000):
+    def get_unprocessed_records_stream(self, filter=None, batch_size: int | None = 1000):
         stmt = select(
             self._model
         ).where(
@@ -64,7 +64,7 @@ class StockRawHistoricalDataInfoRepository(
         for row in result:
             yield row
 
-    def get_unprocessed_records(self, filter=None, batch_size: int | None = 1000):
+    def get_unprocessed_records(self, filter=None, batch_size: int | None = 1000) -> list[RawHistoricalDataInfo]:
         stmt = select(
             self._model
         ).where(
@@ -74,11 +74,15 @@ class StockRawHistoricalDataInfoRepository(
         if filter is not None:
             stmt = stmt.where(filter)
 
+        if batch_size:
+            stmt = stmt.limit(batch_size)
+
         result = self._session.scalars(
             stmt
         )
+        return list(result.all())
 
-    def get_unprocessed_record(self, filter=None):
+    def get_unprocessed_record(self, filter=None) -> RawHistoricalDataInfo | None:
         stmt = select(
             self._model
         ).where(
@@ -93,7 +97,7 @@ class StockRawHistoricalDataInfoRepository(
         )
         return result
 
-    def mark_as_procesed(self, record_id: int):
+    def mark_as_processed(self, record_id: int):
         stmt = update(
             self._model
         ).where(
