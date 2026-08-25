@@ -3,6 +3,7 @@ from core.enum.finance_metrics_enum import FinancialMetric
 
 FINANCIAL_METRIC_ALIASES: dict[str, FinancialMetric] = {
     "Profit before tax": FinancialMetric.PROFIT_BEFORE_TAX,
+    "Profit Before Tax": FinancialMetric.PROFIT_BEFORE_TAX,
     "Income before WC changes": FinancialMetric.INCOME_BEFORE_WC_CHANGES,
     "Change in Assets": FinancialMetric.CHANGE_IN_ASSETS,
     "Change in Liabilities": FinancialMetric.CHANGE_IN_LIABILITIES,
@@ -28,6 +29,7 @@ FINANCIAL_METRIC_ALIASES: dict[str, FinancialMetric] = {
     "Total Equity & Liabilities": FinancialMetric.TOTAL_EQUITY_LIABILITIES,
 
     "revenue": FinancialMetric.REVENUE,
+    "Revenue": FinancialMetric.REVENUE,
     "operating_profit": FinancialMetric.OPERATING_PROFIT,
     "net_profit": FinancialMetric.NET_PROFIT,
 

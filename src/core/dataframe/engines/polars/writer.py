@@ -16,7 +16,6 @@ class PolarsDataWriter(IDataWriter):
         if isinstance(df, pl.LazyFrame):
             df.collect().write_csv(path, **kwargs)
         else:
-            dataframe.write_csv(path, **kwargs)
             df.write_csv(path, **kwargs)
 
     def write_parquet(
@@ -29,7 +28,6 @@ class PolarsDataWriter(IDataWriter):
         if isinstance(df, pl.LazyFrame):
             df.collect().write_parquet(path, **kwargs)
         else:
-            dataframe.write_parquet(path, **kwargs)
             df.write_parquet(path, **kwargs)
 
     def write_json(
@@ -42,7 +40,6 @@ class PolarsDataWriter(IDataWriter):
         if isinstance(df, pl.LazyFrame):
             df.collect().write_json(path, **kwargs)
         else:
-            dataframe.write_json(path, **kwargs)
             df.write_json(path, **kwargs)
 
     def write_database(

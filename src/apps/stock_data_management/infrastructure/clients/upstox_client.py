@@ -7,7 +7,7 @@ from core.clients.http_client import HttpClient
 from core.cache.redis_client import redis_client
 
 
-class UpstoxClient():
+class UpstoxClient:
     def __init__(self):
         self._http = HttpClient(settings.UPSTOX_LIVE_URL) 
         self._upstox_auth_client = UpstoxAuthClient(settings.UPSTOX_API_KEY, settings.UPSTOX_API_SECRET, settings.UPSTOX_REDIRECT_URI, self._http)
